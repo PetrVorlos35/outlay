@@ -1,0 +1,99 @@
+{
+  "nav": {
+    "features": "Funkce",
+    "how": "Jak to funguje",
+    "pricing": "Ceník",
+    "signIn": "Přihlásit se",
+    "getStarted": "Začít"
+  },
+  "hero": {
+    "badge": "Mějte náskok před každým obnovením",
+    "titleLead": "Každá pravidelná platba,",
+    "titleAccent": "vždy na očích.",
+    "subtitle": "Outlay sloučí všechna předplatná do jednoho přehledu, odpočítává každé obnovení a upozorní vás dřív, než peníze odejdou z účtu — aby vás žádná platba nepřekvapila.",
+    "ctaPrimary": "Začít — zdarma",
+    "ctaSecondary": "Jak to funguje",
+    "trust1": "Navždy zdarma",
+    "trust2": "Bez platební karty",
+    "trust3": "Nastavení během pár minut"
+  },
+  "mock": {
+    "live": "Aktualizováno právě teď",
+    "month": "Měsíc",
+    "year": "Rok",
+    "monthlySpend": "Měsíční výdaje",
+    "upcoming": "Nadcházející obnovení",
+    "active": "{count, plural, one {# aktivní} few {# aktivní} other {# aktivních}}",
+    "renewsIn": "obnoví se za {days, plural, one {# den} few {# dny} other {# dní}} · {date}"
+  },
+  "features": {
+    "heading": "Vytvořeno tak, aby pravidelné výdaje nešlo přehlédnout.",
+    "see": {
+      "title": "Všechna předplatná na jednom místě",
+      "body": "Od streamování přes software až po appku do posilovny, na kterou jste zapomněli — každá pravidelná platba se objeví na jednom přehledném panelu. Nic skrytého, nic neunikne."
+    },
+    "notify": {
+      "title": "Upozornění dřív, než zaplatíte",
+      "body": "Upozornění přijde včas, abyste mohli zrušit, pozastavit nebo naplánovat — nikdy až ráno po stržení.",
+      "alert": "{name} se obnoví za {days, plural, one {# den} few {# dny} other {# dní}} — {price}"
+    },
+    "hikes": {
+      "title": "Odhalte zdražení včas",
+      "body": "Outlay upozorní ve chvíli, kdy předplatné tiše zvýší cenu."
+    },
+    "spend": {
+      "title": "Mějte přehled, kolik každý měsíc utratíte",
+      "body": "Jeden jasný měsíční součet, rozepsaný podle předplatného a sledovaný v čase. Skutečná cena vašich pravidelných výdajů, nikdy překvapení."
+    }
+  },
+  "how": {
+    "heading": "Tři kroky, aby vás obnovení už nikdy nepřekvapilo.",
+    "step1Title": "Přidejte svá předplatná",
+    "step1Body": "Zadejte služby, které platíte — název, cenu a fakturační cyklus. Ty hlavní přidáte hromadně během pár vteřin.",
+    "step2Title": "Outlay hlídá každé obnovení",
+    "step2Body": "Držíme přehled o každém datu obnovení a tiše odpočítáváme do další platby napříč všemi předplatnými.",
+    "step3Title": "Upozorníme vás, než zaplatíte",
+    "step3Body": "Včasné upozornění dorazí před každým obnovením — zrušte, pozastavte nebo to naplánujte dřív, než peníze odejdou."
+  },
+  "free": {
+    "heading": "Zdarma. Všechny funkce v ceně.",
+    "body": "outlay je úplně zdarma — žádné tarify, žádná karta, žádné limity. Sledujte vše hned od prvního dne.",
+    "feature1": "Neomezený počet předplatných",
+    "feature2": "Připomínky obnovení",
+    "feature3": "Upozornění na zdražení",
+    "feature4": "Trendy a přehledy výdajů",
+    "cta": "Začít — zdarma",
+    "note": "Bez platební karty."
+  },
+  "cta": {
+    "heading": "Převezměte kontrolu nad pravidelnými výdaji.",
+    "body": "Mějte přehled o všech předplatných, zachyťte každé obnovení a přestaňte platit za věci, na které jste zapomněli.",
+    "primary": "Začít — zdarma",
+    "secondary": "Zobrazit ceník"
+  },
+  "footer": {
+    "tagline": "Každá pravidelná platba, vždy na očích. Odebírejte novinky, jak je vydáváme.",
+    "product": "Produkt",
+    "company": "Společnost",
+    "legal": "Právní",
+    "linkFeatures": "Funkce",
+    "linkHow": "Jak to funguje",
+    "linkPricing": "Ceník",
+    "linkChangelog": "Novinky",
+    "linkAbout": "O nás",
+    "linkBlog": "Blog",
+    "linkCareers": "Kariéra",
+    "linkPrivacy": "Soukromí",
+    "linkTerms": "Podmínky",
+    "linkSecurity": "Zabezpečení",
+    "rights": "© {year} outlay. Všechna práva vyhrazena.",
+    "madeFor": "Pro lidi, kteří nesnášejí překvapivé platby."
+  },
+  "newsletter": {
+    "placeholder": "vas@email.cz",
+    "helper": "Novinky o produktu. Žádný spam, kdykoli se můžete odhlásit.",
+    "success": "Odebíráte — sledujte schránku.",
+    "error": "Zadejte prosím platnou e-mailovou adresu.",
+    "subscribe": "Odebírat"
+  }
+}

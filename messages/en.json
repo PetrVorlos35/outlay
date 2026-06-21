@@ -1,0 +1,99 @@
+{
+  "nav": {
+    "features": "Features",
+    "how": "How it works",
+    "pricing": "Pricing",
+    "signIn": "Sign in",
+    "getStarted": "Get started"
+  },
+  "hero": {
+    "badge": "Stay ahead of every renewal",
+    "titleLead": "Every recurring charge,",
+    "titleAccent": "always visible.",
+    "subtitle": "Outlay keeps every subscription in one view, counts down each renewal, and warns you before money leaves your account — so nothing bills you by surprise.",
+    "ctaPrimary": "Get started — it's free",
+    "ctaSecondary": "See how it works",
+    "trust1": "Free, forever",
+    "trust2": "No card required",
+    "trust3": "Set up in minutes"
+  },
+  "mock": {
+    "live": "Updated just now",
+    "month": "Month",
+    "year": "Year",
+    "monthlySpend": "Monthly spend",
+    "upcoming": "Upcoming renewals",
+    "active": "{count, plural, one {# active} other {# active}}",
+    "renewsIn": "renews in {days, plural, one {# day} other {# days}} · {date}"
+  },
+  "features": {
+    "heading": "Built to make recurring spend impossible to ignore.",
+    "see": {
+      "title": "See every subscription in one place",
+      "body": "From streaming to software to that gym app you forgot about — every recurring charge lands on one calm dashboard. Nothing hidden, nothing slipping through."
+    },
+    "notify": {
+      "title": "Get notified before you're charged",
+      "body": "A heads-up lands in time to cancel, pause, or plan — never the morning after.",
+      "alert": "{name} renews in {days, plural, one {# day} other {# days}} — {price}"
+    },
+    "hikes": {
+      "title": "Catch price hikes early",
+      "body": "Outlay flags the moment a subscription quietly raises its price."
+    },
+    "spend": {
+      "title": "Know exactly what you're spending, every month",
+      "body": "One clear monthly total, broken down per subscription and trended over time. The true cost of your recurring spend, never a surprise."
+    }
+  },
+  "how": {
+    "heading": "Three steps to never being surprised by a renewal.",
+    "step1Title": "Add your subscriptions",
+    "step1Body": "Enter the services you pay for — name, price, and billing cycle. Bulk-add the obvious ones in seconds.",
+    "step2Title": "Outlay tracks every renewal",
+    "step2Body": "We keep each renewal date in view and quietly count down to the next charge across all your subscriptions.",
+    "step3Title": "Get a heads-up before you pay",
+    "step3Body": "A timely notification lands before each renewal — cancel, pause, or plan around it before the money moves."
+  },
+  "free": {
+    "heading": "Free to use. Every feature included.",
+    "body": "outlay is completely free — no plans, no card, no limits. Track everything from day one.",
+    "feature1": "Unlimited subscriptions",
+    "feature2": "Renewal reminders",
+    "feature3": "Price-hike alerts",
+    "feature4": "Spend trends & insights",
+    "cta": "Get started — it's free",
+    "note": "No credit card required."
+  },
+  "cta": {
+    "heading": "Take control of your recurring spend.",
+    "body": "See every subscription, catch every renewal, and stop paying for things you forgot about.",
+    "primary": "Get started — it's free",
+    "secondary": "View pricing"
+  },
+  "footer": {
+    "tagline": "Every recurring charge, always visible. Get product updates as we ship.",
+    "product": "Product",
+    "company": "Company",
+    "legal": "Legal",
+    "linkFeatures": "Features",
+    "linkHow": "How it works",
+    "linkPricing": "Pricing",
+    "linkChangelog": "Changelog",
+    "linkAbout": "About",
+    "linkBlog": "Blog",
+    "linkCareers": "Careers",
+    "linkPrivacy": "Privacy",
+    "linkTerms": "Terms",
+    "linkSecurity": "Security",
+    "rights": "© {year} outlay. All rights reserved.",
+    "madeFor": "Made for people who hate surprise charges."
+  },
+  "newsletter": {
+    "placeholder": "you@example.com",
+    "helper": "Product updates. No spam, unsubscribe anytime.",
+    "success": "Subscribed — watch your inbox.",
+    "error": "Please enter a valid email address.",
+    "subscribe": "Subscribe"
+  }
+}
