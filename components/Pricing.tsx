@@ -32,7 +32,7 @@ export default function Pricing() {
           </div>
 
           <Link
-            href="/dashboard"
+            href="/signup"
             className="mt-8 inline-flex h-12 cursor-pointer items-center justify-center rounded-xl bg-emerald-ink px-6 font-medium text-paper transition-colors hover:bg-emerald-ink/90 focus:outline-none focus:ring-2 focus:ring-emerald-ink/40 focus:ring-offset-2 focus:ring-offset-paper"
           >
             {t("cta")}

@@ -48,7 +48,7 @@ export default function Landing() {
               {t("signIn")}
             </Link>
             <Link
-              href="/dashboard"
+              href="/signup"
               className="inline-flex h-9 cursor-pointer items-center rounded-lg bg-navy px-4 text-sm font-medium text-paper transition-colors hover:bg-navy/90"
             >
               {t("getStarted")}
@@ -73,7 +73,7 @@ export default function Landing() {
               <p className="mt-4 text-lg text-paper/60">{c("body")}</p>
               <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
                 <Link
-                  href="/dashboard"
+                  href="/signup"
                   className="inline-flex h-12 cursor-pointer items-center justify-center gap-2 rounded-xl bg-emerald-ink px-6 font-medium text-paper transition-colors hover:bg-emerald-ink/90"
                 >
                   {c("primary")}

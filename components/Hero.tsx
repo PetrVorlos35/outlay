@@ -35,7 +35,7 @@ export default function Hero() {
 
           <div className="animate-fade-up mt-8 flex flex-col gap-3 sm:flex-row sm:items-center" style={{ animationDelay: "180ms" }}>
             <Link
-              href="/dashboard"
+              href="/signup"
               className="inline-flex h-12 cursor-pointer items-center justify-center gap-2 rounded-xl bg-emerald-ink px-6 font-medium text-paper transition-colors hover:bg-emerald-ink/90 focus:outline-none focus:ring-2 focus:ring-emerald-ink/40 focus:ring-offset-2 focus:ring-offset-paper"
             >
               {t("ctaPrimary")}
