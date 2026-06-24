@@ -16,6 +16,7 @@ import type * as email from "../email.js";
 import type * as http from "../http.js";
 import type * as notifications from "../notifications.js";
 import type * as preferences from "../preferences.js";
+import type * as spend from "../spend.js";
 import type * as subscriptions from "../subscriptions.js";
 import type * as users from "../users.js";
 import type * as waitlist from "../waitlist.js";
@@ -35,6 +36,7 @@ declare const fullApi: ApiFromModules<{
   http: typeof http;
   notifications: typeof notifications;
   preferences: typeof preferences;
+  spend: typeof spend;
   subscriptions: typeof subscriptions;
   users: typeof users;
   waitlist: typeof waitlist;

@@ -108,3 +108,9 @@ export function isUrgent(sub: Subscription): boolean {
 export function isDue(sub: Subscription): boolean {
   return sub.status === "active" && daysUntil(sub.nextRenewal) <= 0;
 }
+
+/** First day of the current month as ISO "yyyy-mm-01" (UTC) — matches snapshots. */
+export function currentMonthIso(): string {
+  const d = new Date();
+  return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}-01`;
+}

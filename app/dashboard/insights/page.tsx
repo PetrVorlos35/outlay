@@ -2,14 +2,17 @@
 
 import { useMemo } from "react";
 import { useLocale, useTranslations } from "next-intl";
+import { useQuery } from "convex/react";
 import { TrendingUp, Sparkles } from "lucide-react";
+import { api } from "@/convex/_generated/api";
 import {
+  currentMonthIso,
   hasPriceHike,
   monthlyAmount,
   totalMonthly,
   type Category,
 } from "@/lib/subscriptions";
-import { buildSpendHistory } from "@/lib/mock";
+import type { SpendPoint } from "@/lib/mock";
 import { formatCurrency } from "@/lib/format";
 import { useDashboard } from "@/components/dashboard/DashboardProvider";
 import {
@@ -20,6 +23,7 @@ import {
 import SubLogo from "@/components/dashboard/SubLogo";
 import SpendChart from "@/components/dashboard/SpendChart";
 import AddSubscriptionButton from "@/components/dashboard/AddSubscriptionButton";
+import InfoHint from "@/components/dashboard/InfoHint";
 import { InsightsSkeleton } from "@/components/dashboard/Skeletons";
 import PageTitle from "@/components/dashboard/PageTitle";
 
@@ -30,10 +34,11 @@ export default function InsightsPage() {
   const locale = useLocale();
   const { subscriptions, loading, openEdit } = useDashboard();
 
+  const trendData = useQuery(api.spend.trend, { months: 7 });
+
   const data = useMemo(() => {
     const active = subscriptions.filter((s) => s.status === "active");
     const monthly = totalMonthly(subscriptions);
-    const history = buildSpendHistory(monthly);
 
     const ranked = [...active]
       .map((s) => ({ sub: s, monthly: monthlyAmount(s.price, s.cycle) }))
@@ -55,13 +60,21 @@ export default function InsightsPage() {
     return {
       active,
       monthly,
-      history,
       ranked,
       categories,
       hikes,
       avg: active.length > 0 ? monthly / active.length : 0,
     };
   }, [subscriptions]);
+
+  // Real recorded history; fall back to this month live before the first snapshot.
+  const history = useMemo<SpendPoint[]>(() => {
+    const real = trendData ?? [];
+    if (real.length > 0) return real;
+    return data.monthly > 0
+      ? [{ month: currentMonthIso(), amount: Math.round(data.monthly * 100) / 100 }]
+      : [];
+  }, [trendData, data.monthly]);
 
   const percent = (n: number) =>
     new Intl.NumberFormat(locale, {
@@ -124,10 +137,19 @@ export default function InsightsPage() {
       {/* Trend + category */}
       <div className="mt-6 grid gap-6 lg:grid-cols-[1.6fr_1fr]">
         <Panel title={t("trendTitle")} subtitle={t("trendSubtitle")}>
-          <SpendChart data={data.history} height={180} showLabels showAxis />
+          <SpendChart data={history} height={180} showLabels showAxis />
+          <p className="mt-3 text-xs text-navy/40">{td("chart.estimate")}</p>
         </Panel>
 
-        <Panel title={t("categoryTitle")}>
+        <Panel
+          title={t("categoryTitle")}
+          action={
+            <InfoHint
+              label={td("help.normalizedLabel")}
+              text={td("help.normalized")}
+            />
+          }
+        >
           <ul className="space-y-4">
             {data.categories.map(({ category, amount }) => (
               <li key={category}>

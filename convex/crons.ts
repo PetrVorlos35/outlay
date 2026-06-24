@@ -20,4 +20,13 @@ crons.cron(
   {},
 );
 
+// On the 1st of each month, snapshot every user's spend so the trend chart is
+// backed by real history rather than a synthesized shape.
+crons.cron(
+  "monthly spend snapshot",
+  "0 2 1 * *",
+  internal.spend.snapshotAllUsers,
+  {},
+);
+
 export default crons;

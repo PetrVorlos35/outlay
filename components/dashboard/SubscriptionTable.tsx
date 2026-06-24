@@ -238,18 +238,13 @@ function Row({
   const paused = sub.status === "paused";
   const due = isDue(sub);
   return (
+    // Mouse users can click anywhere on the row to edit; the row itself is not
+    // an interactive control (that would nest the due-action buttons inside an
+    // interactive element). The service name is the real, focusable edit trigger
+    // for keyboard and screen-reader users.
     <tr
       onClick={onClick}
-      tabIndex={0}
-      role="button"
-      aria-label={editLabel}
-      onKeyDown={(e) => {
-        if (e.key === "Enter" || e.key === " ") {
-          e.preventDefault();
-          onClick();
-        }
-      }}
-      className="cursor-pointer border-t border-navy/[0.06] outline-none transition-colors hover:bg-navy/[0.025] focus-visible:bg-navy/[0.04]"
+      className="cursor-pointer border-t border-navy/[0.06] transition-colors hover:bg-navy/[0.025]"
     >
       {/* Service */}
       <td className="px-4 py-3 sm:px-5">
@@ -257,11 +252,17 @@ function Row({
           <SubLogo sub={sub} />
           <div className="min-w-0">
             <div className="flex items-center gap-2">
-              <span
-                className={`truncate text-sm font-medium ${paused ? "text-navy/50" : "text-navy"}`}
+              <button
+                type="button"
+                aria-label={editLabel}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onClick();
+                }}
+                className={`min-w-0 truncate text-left text-sm font-medium outline-none transition-colors focus-visible:underline focus-visible:decoration-emerald-ink focus-visible:decoration-2 focus-visible:underline-offset-2 ${paused ? "text-navy/50" : "text-navy"}`}
               >
                 {sub.name}
-              </span>
+              </button>
               {hasPriceHike(sub) && (
                 <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-amber" title="Price increased" aria-hidden />
               )}

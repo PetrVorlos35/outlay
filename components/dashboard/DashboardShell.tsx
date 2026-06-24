@@ -13,6 +13,7 @@ import {
   LogOut,
   Menu,
   Plus,
+  Search,
   Settings,
   X,
 } from "lucide-react";
@@ -21,6 +22,7 @@ import Wordmark from "@/components/Wordmark";
 import DashboardProvider, { useDashboard } from "./DashboardProvider";
 import SubscriptionDrawer from "./SubscriptionDrawer";
 import Toaster from "./Toaster";
+import CommandPalette, { OPEN_PALETTE_EVENT } from "./CommandPalette";
 
 type NavItem = {
   href: string;
@@ -71,6 +73,24 @@ function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
         );
       })}
     </nav>
+  );
+}
+
+// Desktop-only affordance that surfaces the ⌘K palette for mouse users.
+function PaletteTrigger() {
+  const t = useTranslations("dashboard.palette");
+  return (
+    <button
+      type="button"
+      onClick={() => window.dispatchEvent(new Event(OPEN_PALETTE_EVENT))}
+      className="flex h-9 w-full cursor-pointer items-center gap-2 rounded-lg border border-navy/[0.12] bg-white px-3 text-sm text-navy/55 transition-colors hover:border-navy/25 hover:text-navy/75"
+    >
+      <Search className="h-4 w-4 shrink-0" />
+      <span className="flex-1 text-left">{t("trigger")}</span>
+      <kbd className="rounded border border-navy/15 px-1.5 py-0.5 font-mono text-[10px] text-navy/45">
+        ⌘K
+      </kbd>
+    </button>
   );
 }
 
@@ -155,8 +175,9 @@ function Chrome({ children }: { children: React.ReactNode }) {
             <Wordmark />
           </Link>
         </div>
-        <div className="px-3">
+        <div className="space-y-2 px-3">
           <AddButton />
+          <PaletteTrigger />
         </div>
         <div className="mt-5 flex-1 overflow-y-auto px-3">
           <NavLinks />
@@ -237,6 +258,7 @@ export default function DashboardShell({
     <DashboardProvider>
       <Chrome>{children}</Chrome>
       <SubscriptionDrawer />
+      <CommandPalette />
       <Toaster />
     </DashboardProvider>
   );

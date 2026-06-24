@@ -194,7 +194,9 @@
     },
     "due": {
       "paid": "Paid",
-      "cancel": "Cancel"
+      "cancel": "Cancel",
+      "paidAria": "Mark {name} as paid",
+      "cancelAria": "Cancel {name}"
     },
     "hike": {
       "label": "Price increased",
@@ -246,6 +248,31 @@
       "title": "No subscriptions yet",
       "body": "Add your first subscription to start tracking renewals and spend.",
       "cta": "Add your first subscription"
+    },
+    "onboard": {
+      "title": "See where your money goes",
+      "body": "Add a service and Outlay shows your true monthly spend and warns you before every charge.",
+      "popular": "Popular — add in one tap",
+      "quickAddHint": "Each adds at a typical price. Edit or remove anytime.",
+      "or": "or"
+    },
+    "chart": {
+      "estimate": "Real monthly spend — this month updates live"
+    },
+    "palette": {
+      "placeholder": "Jump to or do anything…",
+      "add": "Add subscription",
+      "empty": "No matches",
+      "navigate": "navigate",
+      "select": "select",
+      "close": "close",
+      "trigger": "Search"
+    },
+    "help": {
+      "trendLabel": "About the trend",
+      "trend": "Real monthly spend. This month updates live as you add or change subscriptions; past months are locked snapshots.",
+      "normalizedLabel": "About these amounts",
+      "normalized": "Yearly and weekly plans are converted to a monthly figure, so every subscription compares fairly."
     },
     "form": {
       "addTitle": "Add subscription",
@@ -320,6 +347,10 @@
       "deleted": "{name} deleted",
       "paid": "{name} marked paid — next charge rescheduled",
       "canceled": "{name} canceled",
+      "reverted": "Reverted {name}",
+      "error": "Couldn't save — check your connection and try again",
+      "undo": "Undo",
+      "dismiss": "Dismiss",
       "saved": "Preferences saved"
     }
   }

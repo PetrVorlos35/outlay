@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { api } from "@/convex/_generated/api";
 import {
+  currentMonthIso,
   daysUntil,
   hasPriceHike,
   isDue,
@@ -21,13 +22,15 @@ import {
   totalMonthly,
   type Subscription,
 } from "@/lib/subscriptions";
-import { buildSpendHistory } from "@/lib/mock";
+import type { SpendPoint } from "@/lib/mock";
 import { formatCurrency } from "@/lib/format";
 import { useDashboard } from "@/components/dashboard/DashboardProvider";
 import { Panel, PageHeader, EmptyState } from "@/components/dashboard/primitives";
 import SubLogo from "@/components/dashboard/SubLogo";
 import RenewalBadge from "@/components/dashboard/RenewalBadge";
 import DueActions from "@/components/dashboard/DueActions";
+import DashboardEmpty from "@/components/dashboard/DashboardEmpty";
+import InfoHint from "@/components/dashboard/InfoHint";
 import SpendChart from "@/components/dashboard/SpendChart";
 import { OverviewSkeleton } from "@/components/dashboard/Skeletons";
 import PageTitle from "@/components/dashboard/PageTitle";
@@ -38,16 +41,12 @@ export default function OverviewPage() {
   const locale = useLocale();
   const { subscriptions, loading, openAdd, openEdit } = useDashboard();
   const viewer = useQuery(api.users.viewer);
+  const trendData = useQuery(api.spend.trend, { months: 7 });
   const [view, setView] = useState<"month" | "year">("month");
 
   const stats = useMemo(() => {
     const active = subscriptions.filter((s) => s.status === "active");
     const monthly = totalMonthly(subscriptions);
-    const history = buildSpendHistory(monthly);
-    const change =
-      history.length > 1
-        ? history[history.length - 1].amount - history[history.length - 2].amount
-        : 0;
     const upcoming = [...active]
       .filter((s) => daysUntil(s.nextRenewal) >= 0)
       .sort((a, b) => daysUntil(a.nextRenewal) - daysUntil(b.nextRenewal));
@@ -56,14 +55,26 @@ export default function OverviewPage() {
     return {
       active,
       monthly,
-      history,
-      change,
       upcoming,
       urgent,
       hikes,
       next: upcoming[0],
     };
   }, [subscriptions]);
+
+  // Real recorded history; before the first snapshot lands, show this month live
+  // so the chart isn't empty. Change pill compares the two most recent months.
+  const history = useMemo<SpendPoint[]>(() => {
+    const real = trendData ?? [];
+    if (real.length > 0) return real;
+    return stats.monthly > 0
+      ? [{ month: currentMonthIso(), amount: Math.round(stats.monthly * 100) / 100 }]
+      : [];
+  }, [trendData, stats.monthly]);
+  const change =
+    history.length > 1
+      ? history[history.length - 1].amount - history[history.length - 2].amount
+      : 0;
 
   const firstName = viewer?.name?.trim().split(" ")[0];
   const greeting = firstName
@@ -72,11 +83,11 @@ export default function OverviewPage() {
 
   const factor = view === "year" ? 12 : 1;
   const headlineTotal = stats.monthly * factor;
-  const headlineChange = stats.change * factor;
+  const headlineChange = change * factor;
   const chartData =
     view === "year"
-      ? stats.history.map((p) => ({ ...p, amount: p.amount * 12 }))
-      : stats.history;
+      ? history.map((p) => ({ ...p, amount: p.amount * 12 }))
+      : history;
 
   if (loading) {
     return (
@@ -94,12 +105,7 @@ export default function OverviewPage() {
         <PageTitle section={td("nav.overview")} />
         <PageHeader title={greeting} subtitle={t("subtitle")} />
         <Panel bodyClassName="">
-          <EmptyState
-            icon={<Plus className="h-6 w-6" />}
-            title={td("empty.title")}
-            body={td("empty.body")}
-            action={<AddCta label={td("empty.cta")} onClick={openAdd} />}
-          />
+          <DashboardEmpty />
         </Panel>
       </div>
     );
@@ -155,6 +161,10 @@ export default function OverviewPage() {
 
           <div className="mt-7">
             <SpendChart data={chartData} height={88} showLabels />
+            <p className="mt-3 inline-flex items-center gap-1.5 text-xs text-navy/40">
+              {td("chart.estimate")}
+              <InfoHint label={td("help.trendLabel")} text={td("help.trend")} />
+            </p>
           </div>
         </div>
 

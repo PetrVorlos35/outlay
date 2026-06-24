@@ -1,0 +1,136 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-06-24T00:00:00.000Z",
+  "title": "Design System: Outlay",
+  "extensions": {
+    "colorMeta": {
+      "ink-navy": { "role": "primary", "displayName": "Ink Navy", "canonical": "#0b1220", "tonalRamp": ["#05080e", "#0b1220", "#1a2436", "#2d3a52", "#4a586f", "#6f7c92", "#9aa4b5", "#c9cfd9"] },
+      "ledger-green": { "role": "primary", "displayName": "Ledger Green", "canonical": "#047857", "tonalRamp": ["#02261c", "#034d38", "#047857", "#05906a", "#10b981", "#34d399", "#6ee7b7", "#a7f3d0"] },
+      "signal-emerald": { "role": "secondary", "displayName": "Signal Emerald", "canonical": "#10b981", "tonalRamp": ["#053527", "#067252", "#059669", "#10b981", "#34d399", "#6ee7b7", "#a7f3d0", "#d1fae5"] },
+      "alert-amber": { "role": "secondary", "displayName": "Alert Amber", "canonical": "#f59e0b", "tonalRamp": ["#451f04", "#7a3f07", "#b45309", "#d97706", "#f59e0b", "#fbbf24", "#fcd34d", "#fde68a"] },
+      "caution-amber": { "role": "secondary", "displayName": "Caution Amber", "canonical": "#b45309", "tonalRamp": ["#3a1a03", "#5e2c05", "#92510a", "#b45309", "#d97706", "#f59e0b", "#fbbf24", "#fcd34d"] },
+      "paper": { "role": "neutral", "displayName": "Paper", "canonical": "#fafaf9", "tonalRamp": ["#1c1c1b", "#3a3a38", "#6b6b68", "#9a9a96", "#c4c4c0", "#e2e2df", "#f0f0ee", "#fafaf9"] },
+      "card-white": { "role": "neutral", "displayName": "Card White", "canonical": "#ffffff", "tonalRamp": ["#1c1c1b", "#3a3a38", "#6b6b68", "#9a9a96", "#c4c4c0", "#e8e8e6", "#f4f4f3", "#ffffff"] }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display", "purpose": "Hero headline only; the one raised voice, kept under 4rem." },
+      "headline": { "displayName": "Headline", "purpose": "Page and section titles." },
+      "title": { "displayName": "Title", "purpose": "Panel, card and drawer titles." },
+      "body": { "displayName": "Body", "purpose": "Default prose, Ink Navy at 70% opacity." },
+      "label": { "displayName": "Label", "purpose": "Functional stat/column captions only — never a section eyebrow." },
+      "numeral": { "displayName": "Numeral", "purpose": "Every monetary figure, count and percentage, in Geist Mono tabular-nums." }
+    },
+    "shadows": [
+      { "name": "float-soft", "value": "0 8px 24px -12px rgba(11,18,32,0.25)", "purpose": "Dropdowns, popovers, catalog suggestion list." },
+      { "name": "drawer", "value": "0 0 60px -15px rgba(11,18,32,0.4)", "purpose": "Right-side subscription drawer lifting off the page." },
+      { "name": "lift", "value": "0 1px 2px rgba(11,18,32,0.04), 0 24px 48px -24px rgba(11,18,32,0.18)", "purpose": "Landing product mock floating above the hairline grid." }
+    ],
+    "motion": [
+      { "name": "ease-out-quint", "value": "cubic-bezier(0.22, 1, 0.36, 1)", "purpose": "The one easing curve — every entrance, toast and bar growth. No bounce." },
+      { "name": "fade-up", "value": "fade-up 0.7s cubic-bezier(0.22,1,0.36,1) both", "purpose": "Staggered hero/section entrance (translateY 14px + opacity)." },
+      { "name": "pulse-dot", "value": "pulse-dot 2s ease-in-out infinite", "purpose": "The only ambient motion — the live PulseMark by the wordmark." }
+    ],
+    "breakpoints": [
+      { "name": "sm", "value": "640px" },
+      { "name": "md", "value": "768px" },
+      { "name": "lg", "value": "1024px" },
+      { "name": "xl", "value": "1280px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The single most important action per view (Add, Save, Paid).",
+      "html": "<button class=\"ds-btn-primary\">Add subscription</button>",
+      "css": ".ds-btn-primary { display:inline-flex; align-items:center; gap:8px; height:40px; padding:0 20px; border:none; border-radius:12px; background:#047857; color:#fafaf9; font-family:Geist,system-ui,sans-serif; font-size:14px; font-weight:500; cursor:pointer; transition:background .2s cubic-bezier(0.22,1,0.36,1); } .ds-btn-primary:hover { background:rgba(4,120,87,.9); } .ds-btn-primary:focus-visible { outline:none; box-shadow:0 0 0 2px #fafaf9,0 0 0 4px rgba(4,120,87,.4); }"
+    },
+    {
+      "name": "Secondary Button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Cancel, secondary nav, low-emphasis actions.",
+      "html": "<button class=\"ds-btn-secondary\">Cancel</button>",
+      "css": ".ds-btn-secondary { display:inline-flex; align-items:center; gap:8px; height:40px; padding:0 20px; border:1px solid rgba(11,18,32,.15); border-radius:12px; background:#fff; color:#0b1220; font-family:Geist,system-ui,sans-serif; font-size:14px; font-weight:500; cursor:pointer; transition:border-color .2s cubic-bezier(0.22,1,0.36,1); } .ds-btn-secondary:hover { border-color:rgba(11,18,32,.3); } .ds-btn-secondary:focus-visible { outline:none; box-shadow:0 0 0 2px rgba(11,18,32,.2); }"
+    },
+    {
+      "name": "Search Input",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Field with a calm green focus state; placeholder held to body contrast.",
+      "html": "<input class=\"ds-input\" type=\"text\" placeholder=\"Search subscriptions\" />",
+      "css": ".ds-input { height:44px; width:280px; padding:0 14px; border:1px solid rgba(11,18,32,.15); border-radius:12px; background:#fff; color:#0b1220; font-family:Geist,system-ui,sans-serif; font-size:14px; transition:border-color .2s,box-shadow .2s; } .ds-input::placeholder { color:rgba(11,18,32,.45); } .ds-input:focus { outline:none; border-color:#047857; box-shadow:0 0 0 2px rgba(4,120,87,.3); }"
+    },
+    {
+      "name": "Status Pill",
+      "kind": "chip",
+      "refersTo": "status-pill",
+      "description": "Active/Paused status — dot AND text, never color alone.",
+      "html": "<span class=\"ds-pill\"><span class=\"ds-pill-dot\"></span>Active</span>",
+      "css": ".ds-pill { display:inline-flex; align-items:center; gap:6px; padding:4px 10px; border-radius:9999px; background:rgba(16,185,129,.1); color:#047857; font-family:Geist,system-ui,sans-serif; font-size:12px; font-weight:500; } .ds-pill-dot { width:6px; height:6px; border-radius:9999px; background:#10b981; }"
+    },
+    {
+      "name": "Panel",
+      "kind": "card",
+      "refersTo": "panel",
+      "description": "Flat surface defined by a hairline and tonal step — no shadow at rest.",
+      "html": "<div class=\"ds-panel\"><div class=\"ds-panel-title\">Upcoming</div><div class=\"ds-panel-body\">Every recurring charge you're tracking.</div></div>",
+      "css": ".ds-panel { border:1px solid rgba(11,18,32,.1); border-radius:16px; background:#fff; padding:20px; } .ds-panel-title { font-family:Geist,system-ui,sans-serif; font-size:18px; font-weight:600; letter-spacing:-.01em; color:#0b1220; } .ds-panel-body { margin-top:6px; font-family:Geist,system-ui,sans-serif; font-size:14px; line-height:1.6; color:rgba(11,18,32,.7); }"
+    },
+    {
+      "name": "Renewal Badge",
+      "kind": "custom",
+      "refersTo": null,
+      "description": "Signature countdown: dot + text, amber when urgent or overdue.",
+      "html": "<span class=\"ds-renewal ds-renewal--urgent\"><span class=\"ds-renewal-dot\"></span>Renews today<span class=\"ds-renewal-date\"> · Jun 24</span></span>",
+      "css": ".ds-renewal { display:inline-flex; align-items:center; gap:6px; font-family:Geist,system-ui,sans-serif; font-size:12px; font-weight:500; color:rgba(11,18,32,.55); } .ds-renewal-dot { width:6px; height:6px; border-radius:9999px; background:rgba(11,18,32,.25); } .ds-renewal--urgent { color:#b45309; } .ds-renewal--urgent .ds-renewal-dot { background:#f59e0b; } .ds-renewal-date { color:rgba(11,18,32,.4); }"
+    },
+    {
+      "name": "Due Actions",
+      "kind": "custom",
+      "refersTo": null,
+      "description": "Inline Paid / Cancel buttons shown on a charge that is due today or overdue.",
+      "html": "<div class=\"ds-due\"><button class=\"ds-due-paid\">✓ Paid</button><button class=\"ds-due-cancel\">✕ Cancel</button></div>",
+      "css": ".ds-due { display:inline-flex; align-items:center; gap:6px; } .ds-due-paid { display:inline-flex; align-items:center; gap:6px; height:32px; padding:0 12px; border:none; border-radius:8px; background:#047857; color:#fafaf9; font-family:Geist,system-ui,sans-serif; font-size:12px; font-weight:500; cursor:pointer; } .ds-due-paid:hover { background:rgba(4,120,87,.9); } .ds-due-cancel { display:inline-flex; align-items:center; gap:6px; height:32px; padding:0 12px; border:1px solid rgba(11,18,32,.15); border-radius:8px; background:#fff; color:rgba(11,18,32,.7); font-family:Geist,system-ui,sans-serif; font-size:12px; font-weight:500; cursor:pointer; } .ds-due-cancel:hover { border-color:rgba(11,18,32,.3); color:#0b1220; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Quiet Ledger",
+    "overview": "Outlay is a financial instrument that respects your attention — a clean accountant's ledger on a bright desk: hairline rules, exact figures in a monospace column, generous margins, no decorative flourish that doesn't help you read a number faster. A near-white Paper field, Card White surfaces split by 1px Ink Navy hairlines, and one working accent (Ledger Green) reserved for what you can act on. The job is calm certainty: surface what needs action (imminent renewal, price hike, charge due today) with restraint, never manufactured urgency. It works in Czech and English with equal grace.",
+    "keyCharacteristics": [
+      "Paper field + white surfaces + 1px navy hairlines; flat by default.",
+      "One working accent (Ledger Green); amber strictly for attention.",
+      "All money in tabular monospace numerals.",
+      "Restraint over alarm; color never the sole signal.",
+      "Bilingual (cs/en) by construction."
+    ],
+    "rules": [
+      { "name": "The One Green Rule", "body": "Ledger/Signal green marks only what is actionable or yours; its scarcity is the signal.", "section": "colors" },
+      { "name": "The Amber-Is-Attention Rule", "body": "Amber means 'look here soon', never 'error'. Errors are red (#dc2626) gated behind confirm.", "section": "colors" },
+      { "name": "The Navy-Opacity Rule", "body": "Every gray is Ink Navy at an alpha, never a sampled neutral gray.", "section": "colors" },
+      { "name": "The Money-Is-Mono Rule", "body": "Every price, total, count and percentage is set in Geist Mono with tabular-nums.", "section": "typography" },
+      { "name": "The No-Eyebrow Rule", "body": "The small uppercase Label is a functional stat caption only — never a decorative section eyebrow.", "section": "typography" },
+      { "name": "The Flat-By-Default Rule", "body": "Surfaces are flat at rest (hairline + tonal step); only overlays and the hero mock earn a shadow.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do set every monetary figure in Geist Mono with tabular-nums.",
+      "Do keep green for actionable-or-yours only; let its rarity do the work.",
+      "Do build every gray from Ink Navy at an alpha, never a sampled neutral gray.",
+      "Do pair amber with an icon or dot AND text so meaning never rides on color alone.",
+      "Do keep surfaces flat at rest — shadow only for true overlays.",
+      "Do test every label and heading in both Czech and English.",
+      "Do honor prefers-reduced-motion."
+    ],
+    "donts": [
+      "Don't ship the generic SaaS template: no purple-blue gradients, hero-metric block, or identical icon+heading card grids.",
+      "Don't use gradient text or glassmorphism as decoration.",
+      "Don't drift into corporate fintech: no cold navy-and-gold, no heavy formal weight.",
+      "Don't chase the crypto/hype look: no neon charts, blinking numbers, dark-mode-because-cool, animation overload.",
+      "Don't go cutesy: no mascots, childish illustration, or candy colors.",
+      "Don't put a tiny uppercase tracked eyebrow above section headings.",
+      "Don't use a colored border-left/right > 1px as a stripe accent.",
+      "Don't let amber read as 'error' — errors are red and gated behind confirm."
+    ]
+  }
+}

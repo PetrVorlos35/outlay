@@ -57,4 +57,13 @@ export default defineSchema({
     priceHikeAlerts: v.boolean(),
     weeklySummary: v.boolean(),
   }).index("by_user", ["userId"]),
+
+  // One real spend snapshot per user per month — the monthly-normalized total of
+  // their active subscriptions. The current month is kept fresh from the client;
+  // a monthly cron seeds each new month. Replaces the old synthesized trend.
+  spendHistory: defineTable({
+    userId: v.id("users"),
+    month: v.string(), // first of month, ISO "yyyy-mm-01"
+    amount: v.number(),
+  }).index("by_user_and_month", ["userId", "month"]),
 });

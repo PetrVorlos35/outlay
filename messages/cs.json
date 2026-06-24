@@ -194,7 +194,9 @@
     },
     "due": {
       "paid": "Zaplaceno",
-      "cancel": "Zrušit"
+      "cancel": "Zrušit",
+      "paidAria": "Označit {name} jako zaplacené",
+      "cancelAria": "Zrušit {name}"
     },
     "hike": {
       "label": "Cena vzrostla",
@@ -246,6 +248,31 @@
       "title": "Zatím žádná předplatná",
       "body": "Přidejte první předplatné a začněte sledovat obnovení a výdaje.",
       "cta": "Přidat první předplatné"
+    },
+    "onboard": {
+      "title": "Měj přehled, kam tečou peníze",
+      "body": "Přidej službu a Outlay ti ukáže skutečné měsíční výdaje a upozorní tě před každou platbou.",
+      "popular": "Oblíbené — přidej jedním klikem",
+      "quickAddHint": "Každá se přidá s běžnou cenou. Kdykoli uprav nebo smaž.",
+      "or": "nebo"
+    },
+    "chart": {
+      "estimate": "Skutečné měsíční výdaje — tento měsíc se aktualizuje"
+    },
+    "palette": {
+      "placeholder": "Přejdi kamkoli nebo cokoli udělej…",
+      "add": "Přidat předplatné",
+      "empty": "Žádná shoda",
+      "navigate": "pohyb",
+      "select": "vybrat",
+      "close": "zavřít",
+      "trigger": "Hledat"
+    },
+    "help": {
+      "trendLabel": "O grafu",
+      "trend": "Skutečné měsíční výdaje. Tento měsíc se aktualizuje, jak přidáváš nebo měníš předplatná; minulé měsíce jsou uzamčené snímky.",
+      "normalizedLabel": "O těchto částkách",
+      "normalized": "Roční a týdenní plány se přepočítají na měsíční částku, aby šlo vše férově porovnat."
     },
     "form": {
       "addTitle": "Přidat předplatné",
@@ -320,6 +347,10 @@
       "deleted": "{name} smazáno",
       "paid": "{name} označeno jako zaplacené — další platba posunuta",
       "canceled": "{name} zrušeno",
+      "reverted": "{name} vráceno",
+      "error": "Nepodařilo se uložit — zkontroluj připojení a zkus to znovu",
+      "undo": "Vrátit",
+      "dismiss": "Zavřít",
       "saved": "Předvolby uloženy"
     }
   }

@@ -62,7 +62,6 @@ const BLANK: Fields = {
 
 export default function SubscriptionDrawer() {
   const t = useTranslations("dashboard.form");
-  const tt = useTranslations("dashboard.toast");
   const tc = useTranslations("dashboard.cycle");
   const tcat = useTranslations("dashboard.category");
   const ts = useTranslations("dashboard.status");
@@ -73,7 +72,6 @@ export default function SubscriptionDrawer() {
     addSubscription,
     updateSubscription,
     deleteSubscription,
-    notify,
   } = useDashboard();
 
   const { open, editing } = drawer;
@@ -81,6 +79,7 @@ export default function SubscriptionDrawer() {
 
   const [fields, setFields] = useState<Fields>(BLANK);
   const [errors, setErrors] = useState<Partial<Record<keyof Fields, string>>>({});
+  const [submitting, setSubmitting] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [wasOpen, setWasOpen] = useState(false);
   const [comboOpen, setComboOpen] = useState(false);
@@ -98,6 +97,7 @@ export default function SubscriptionDrawer() {
     setWasOpen(open);
     if (open) {
       setErrors({});
+      setSubmitting(false);
       setConfirmDelete(false);
       setComboOpen(false);
       setActiveIndex(-1);
@@ -213,8 +213,9 @@ export default function SubscriptionDrawer() {
     }
   }
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (submitting) return;
     const next: Partial<Record<keyof Fields, string>> = {};
     const name = fields.name.trim();
     const price = parseFloat(fields.price);
@@ -238,21 +239,22 @@ export default function SubscriptionDrawer() {
       previousPrice: editing?.previousPrice,
     };
 
-    if (editing) {
-      updateSubscription(editing.id, draft);
-      notify(tt("updated", { name }));
-    } else {
-      addSubscription(draft);
-      notify(tt("added", { name }));
-    }
-    closeDrawer();
+    setSubmitting(true);
+    const ok = editing
+      ? await updateSubscription(editing.id, draft)
+      : await addSubscription(draft);
+    setSubmitting(false);
+    // On failure the provider already toasted the error; keep the drawer open
+    // with the user's input intact so they can retry.
+    if (ok) closeDrawer();
   }
 
-  function handleDelete() {
-    if (!editing) return;
-    deleteSubscription(editing.id);
-    notify(tt("deleted", { name: editing.name }));
-    closeDrawer();
+  async function handleDelete() {
+    if (!editing || submitting) return;
+    setSubmitting(true);
+    const ok = await deleteSubscription(editing.id, editing.name);
+    setSubmitting(false);
+    if (ok) closeDrawer();
   }
 
   return (
@@ -504,7 +506,8 @@ export default function SubscriptionDrawer() {
                 <button
                   type="button"
                   onClick={handleDelete}
-                  className="inline-flex h-9 cursor-pointer items-center rounded-lg bg-red-600 px-3 text-sm font-medium text-white transition-colors hover:bg-red-700"
+                  disabled={submitting}
+                  className="inline-flex h-9 cursor-pointer items-center rounded-lg bg-red-600 px-3 text-sm font-medium text-white transition-colors hover:bg-red-700 disabled:cursor-default disabled:opacity-60"
                 >
                   {t("deleteConfirmYes")}
                 </button>
@@ -533,7 +536,8 @@ export default function SubscriptionDrawer() {
               <button
                 type="submit"
                 form="sub-form"
-                className="inline-flex h-10 cursor-pointer items-center rounded-xl bg-emerald-ink px-5 text-sm font-medium text-paper transition-colors hover:bg-emerald-ink/90 focus:outline-none focus:ring-2 focus:ring-emerald-ink/40 focus:ring-offset-2 focus:ring-offset-white"
+                disabled={submitting}
+                className="inline-flex h-10 cursor-pointer items-center rounded-xl bg-emerald-ink px-5 text-sm font-medium text-paper transition-colors hover:bg-emerald-ink/90 focus:outline-none focus:ring-2 focus:ring-emerald-ink/40 focus:ring-offset-2 focus:ring-offset-white disabled:cursor-default disabled:opacity-60"
               >
                 {isEdit ? t("saveEdit") : t("save")}
               </button>

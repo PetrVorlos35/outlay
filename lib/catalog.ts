@@ -81,6 +81,22 @@ export const CATALOG: CatalogEntry[] = [
   { name: "Patreon", domain: "patreon.com", color: "#FF424D", price: 5.0, cycle: "monthly", category: "other" },
 ];
 
+/** A short, recognizable set surfaced as one-tap quick-adds on the empty state. */
+export const POPULAR_DOMAINS = [
+  "Netflix",
+  "Spotify",
+  "ChatGPT Plus",
+  "YouTube Premium",
+  "iCloud+",
+  "Disney+",
+  "Xbox Game Pass",
+  "Notion",
+] as const;
+
+export const POPULAR: CatalogEntry[] = POPULAR_DOMAINS.map(
+  (name) => CATALOG.find((c) => c.name === name)!,
+).filter(Boolean);
+
 /** Case-insensitive substring match over the catalog, capped to `limit`. */
 export function searchCatalog(query: string, limit = 6): CatalogEntry[] {
   const q = query.trim().toLowerCase();

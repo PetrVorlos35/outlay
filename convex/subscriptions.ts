@@ -166,6 +166,23 @@ export const markPaid = mutation({
   },
 });
 
+/** Set the renewal date directly — used to undo a mark-paid (restore the date). */
+export const setRenewal = mutation({
+  args: { id: v.id("subscriptions"), nextRenewal: v.string() },
+  handler: async (ctx, { id, nextRenewal }) => {
+    const userId = await getAuthUserId(ctx);
+    if (userId === null) throw new Error("Not authenticated");
+
+    const existing = await ctx.db.get(id);
+    if (!existing || existing.userId !== userId) {
+      throw new Error("Subscription not found");
+    }
+
+    await ctx.db.patch(id, { nextRenewal });
+    return null;
+  },
+});
+
 /** Flip a subscription between active and paused (e.g. after cancelling it). */
 export const setStatus = mutation({
   args: { id: v.id("subscriptions"), status: subStatus },
