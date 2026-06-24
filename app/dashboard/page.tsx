@@ -16,6 +16,7 @@ import { api } from "@/convex/_generated/api";
 import {
   daysUntil,
   hasPriceHike,
+  isDue,
   isUrgent,
   totalMonthly,
   type Subscription,
@@ -26,6 +27,7 @@ import { useDashboard } from "@/components/dashboard/DashboardProvider";
 import { Panel, PageHeader, EmptyState } from "@/components/dashboard/primitives";
 import SubLogo from "@/components/dashboard/SubLogo";
 import RenewalBadge from "@/components/dashboard/RenewalBadge";
+import DueActions from "@/components/dashboard/DueActions";
 import SpendChart from "@/components/dashboard/SpendChart";
 import { OverviewSkeleton } from "@/components/dashboard/Skeletons";
 import PageTitle from "@/components/dashboard/PageTitle";
@@ -378,20 +380,30 @@ function AttentionRow({
   trailing: React.ReactNode;
   onClick: () => void;
 }) {
+  const due = isDue(sub);
+  // A plain div (not a <button>) so the due-action buttons can nest validly.
   return (
     <li>
-      <button
-        type="button"
+      <div
+        role="button"
+        tabIndex={0}
         onClick={onClick}
-        className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-colors hover:bg-navy/[0.03]"
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            onClick();
+          }
+        }}
+        className="flex w-full cursor-pointer items-center gap-3 rounded-xl px-3 py-2.5 text-left outline-none transition-colors hover:bg-navy/[0.03] focus-visible:bg-navy/[0.04]"
       >
         <SubLogo sub={sub} />
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-medium text-navy">{sub.name}</p>
           {detail}
+          {due && <DueActions sub={sub} className="mt-2" />}
         </div>
         {trailing}
-      </button>
+      </div>
     </li>
   );
 }

@@ -74,20 +74,19 @@
   "footer": {
     "tagline": "Every recurring charge, always visible. Get product updates as we ship.",
     "product": "Product",
-    "company": "Company",
     "legal": "Legal",
     "linkFeatures": "Features",
     "linkHow": "How it works",
     "linkPricing": "Pricing",
-    "linkChangelog": "Changelog",
-    "linkAbout": "About",
-    "linkBlog": "Blog",
-    "linkCareers": "Careers",
     "linkPrivacy": "Privacy",
     "linkTerms": "Terms",
     "linkSecurity": "Security",
-    "rights": "© {year} outlay. All rights reserved.",
+    "copyright": "© {year} <link>Petr Vorlíček</link>. Crafted with attention to detail.",
     "madeFor": "Made for people who hate surprise charges."
+  },
+  "legal": {
+    "updated": "Last updated {date}",
+    "backHome": "Back to home"
   },
   "newsletter": {
     "placeholder": "you@example.com",
@@ -125,6 +124,24 @@
     "errorSignIn": "Wrong email or password. Please try again.",
     "errorSignUp": "Couldn't create your account. That email may already be in use.",
     "errorGeneric": "Something went wrong. Please try again.",
+    "forgotPassword": "Forgot password?",
+    "code": "Verification code",
+    "codePlaceholder": "123456",
+    "verifyTitle": "Check your email",
+    "verifySubtitle": "We sent a 6-digit code to {email}. Enter it to verify your account.",
+    "verifyCta": "Verify & continue",
+    "errorVerify": "That code is wrong or expired. Please try again.",
+    "resetTitle": "Reset your password",
+    "resetSubtitle": "Enter your email and we'll send you a reset code.",
+    "resetCta": "Send reset code",
+    "resetVerifyTitle": "Set a new password",
+    "resetVerifySubtitle": "Enter the code we sent to {email} and choose a new password.",
+    "newPassword": "New password",
+    "resetVerifyCta": "Reset password & sign in",
+    "resendCode": "Resend code",
+    "codeResent": "A new code is on its way.",
+    "backToSignIn": "Back to sign in",
+    "errorReset": "Couldn't reset your password. Check the code and try again.",
     "panelTitle": "Every recurring charge, always visible.",
     "panelBody": "Join outlay and stop letting renewals catch you off guard.",
     "panelPoint1": "Every subscription on one calm dashboard",
@@ -174,6 +191,10 @@
       "tomorrow": "Renews tomorrow",
       "inDays": "Renews in {days, plural, one {# day} other {# days}}",
       "overdue": "Renewal overdue"
+    },
+    "due": {
+      "paid": "Paid",
+      "cancel": "Cancel"
     },
     "hike": {
       "label": "Price increased",
@@ -297,6 +318,8 @@
       "added": "{name} added",
       "updated": "{name} updated",
       "deleted": "{name} deleted",
+      "paid": "{name} marked paid — next charge rescheduled",
+      "canceled": "{name} canceled",
       "saved": "Preferences saved"
     }
   }

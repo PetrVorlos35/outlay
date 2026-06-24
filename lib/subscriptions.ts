@@ -103,3 +103,8 @@ export function isUrgent(sub: Subscription): boolean {
   const d = daysUntil(sub.nextRenewal);
   return d >= 0 && d <= URGENT_DAYS;
 }
+
+/** Due to be charged: active and the renewal date is today or already past. */
+export function isDue(sub: Subscription): boolean {
+  return sub.status === "active" && daysUntil(sub.nextRenewal) <= 0;
+}

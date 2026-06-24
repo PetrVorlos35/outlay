@@ -6,6 +6,7 @@ import { ArrowDown, ArrowUp, Search, X } from "lucide-react";
 import {
   daysUntil,
   hasPriceHike,
+  isDue,
   monthlyAmount,
   type SubStatus,
   type Subscription,
@@ -14,6 +15,7 @@ import { formatCurrency } from "@/lib/format";
 import { useDashboard } from "./DashboardProvider";
 import SubLogo from "./SubLogo";
 import RenewalBadge from "./RenewalBadge";
+import DueActions from "./DueActions";
 
 type SortKey = "name" | "price" | "renewal";
 type Filter = "all" | SubStatus;
@@ -234,6 +236,7 @@ function Row({
   statusLabel: string;
 }) {
   const paused = sub.status === "paused";
+  const due = isDue(sub);
   return (
     <tr
       onClick={onClick}
@@ -274,6 +277,7 @@ function Row({
                 <RenewalBadge iso={sub.nextRenewal} />
               )}
             </div>
+            {due && <DueActions sub={sub} className="mt-2 sm:hidden" />}
           </div>
         </div>
       </td>
@@ -295,6 +299,7 @@ function Row({
         ) : (
           <RenewalBadge iso={sub.nextRenewal} withDate />
         )}
+        {due && <DueActions sub={sub} className="mt-2" />}
       </td>
 
       {/* Price */}

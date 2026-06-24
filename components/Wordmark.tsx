@@ -1,18 +1,27 @@
+import { OutlayLogo } from "./OutlayLogo";
+
+/**
+ * Thin compatibility wrapper around the brand {@link OutlayLogo}. Keeps the
+ * existing `tone` API so every call site (nav, footer, auth, dashboard) renders
+ * the real pulse-mark logo. `tone="paper"` is for dark backgrounds.
+ */
 export default function Wordmark({
   className = "",
   tone = "navy",
+  size = 30,
+  showWordmark = true,
 }: {
   className?: string;
   tone?: "navy" | "paper";
+  size?: number;
+  showWordmark?: boolean;
 }) {
   return (
-    <span
-      className={`inline-flex items-center gap-2 text-lg font-semibold tracking-tight ${
-        tone === "paper" ? "text-paper" : "text-navy"
-      } ${className}`}
-    >
-      <span className="h-2.5 w-2.5 rounded-[3px] bg-emerald" aria-hidden />
-      outlay
-    </span>
+    <OutlayLogo
+      size={size}
+      variant={tone === "paper" ? "onDark" : "onLight"}
+      showWordmark={showWordmark}
+      className={className}
+    />
   );
 }

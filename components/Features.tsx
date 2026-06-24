@@ -1,5 +1,7 @@
 import { useTranslations } from "next-intl";
 import { Eye, BellRing, TrendingUp, PieChart } from "lucide-react";
+import SubLogo from "@/components/dashboard/SubLogo";
+import { logoUrl } from "@/lib/catalog";
 
 export default function Features() {
   const t = useTranslations("features");
@@ -27,15 +29,18 @@ export default function Features() {
           {/* Mini stacked list visual */}
           <div className="mt-6 space-y-2">
             {[
-              { n: "Netflix", p: "15.49", c: "bg-[#E50914]" },
-              { n: "Spotify", p: "10.99", c: "bg-[#1DB954]" },
-              { n: "Notion", p: "8.00", c: "bg-navy" },
+              { n: "Netflix", p: "15.49", color: "#E50914", domain: "netflix.com" },
+              { n: "Spotify", p: "10.99", color: "#1DB954", domain: "spotify.com" },
+              { n: "Notion", p: "8.00", color: "#000000", domain: "notion.so" },
             ].map((r) => (
               <div
                 key={r.n}
                 className="flex items-center gap-3 rounded-lg border border-navy/[0.07] bg-paper px-3 py-2"
               >
-                <span className={`h-5 w-5 rounded ${r.c}`} aria-hidden />
+                <SubLogo
+                  sub={{ name: r.n, color: r.color, logo: logoUrl(r.domain) }}
+                  size="sm"
+                />
                 <span className="flex-1 text-sm font-medium text-navy">{r.n}</span>
                 <span className="font-mono text-sm text-navy/70">${r.p}</span>
               </div>

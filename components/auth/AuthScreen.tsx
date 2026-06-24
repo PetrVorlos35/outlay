@@ -12,6 +12,7 @@ import {
   Eye,
   EyeOff,
   Loader2,
+  MailCheck,
   TrendingUp,
   Wallet,
 } from "lucide-react";
@@ -22,6 +23,7 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const MIN_PASSWORD = 8;
 
 type Mode = "signIn" | "signUp";
+type Phase = "credentials" | "verifyEmail" | "resetRequest" | "resetVerify";
 
 function GoogleIcon({ className = "" }: { className?: string }) {
   return (
@@ -53,13 +55,19 @@ export default function AuthScreen({ mode }: { mode: Mode }) {
 
   const isSignUp = mode === "signUp";
 
+  const [phase, setPhase] = useState<Phase>("credentials");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [code, setCode] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
+
+  const busy = submitting || googleLoading;
 
   const panelPoints = [
     { Icon: Wallet, text: t("panelPoint1") },
@@ -67,9 +75,16 @@ export default function AuthScreen({ mode }: { mode: Mode }) {
     { Icon: TrendingUp, text: t("panelPoint3") },
   ];
 
-  async function handleSubmit(e: FormEvent<HTMLFormElement>) {
+  function goTo(next: Phase) {
+    setError(null);
+    setNotice(null);
+    setPhase(next);
+  }
+
+  // ── Credentials (sign in / sign up) ───────────────────────────────────────
+  async function handleCredentials(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    if (submitting || googleLoading) return;
+    if (busy) return;
     setError(null);
 
     const trimmedEmail = email.trim();
@@ -90,15 +105,100 @@ export default function AuthScreen({ mode }: { mode: Mode }) {
         flow: mode,
         ...(isSignUp ? { name: name.trim() } : {}),
       });
-      router.push("/dashboard");
+      if (isSignUp) {
+        // Account created; a verification code was emailed. Move to the code step.
+        setSubmitting(false);
+        goTo("verifyEmail");
+      } else {
+        router.push("/dashboard");
+      }
     } catch {
       setError(isSignUp ? t("errorSignUp") : t("errorSignIn"));
       setSubmitting(false);
     }
   }
 
+  // ── Verify email (after sign up) ──────────────────────────────────────────
+  async function handleVerify(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    if (busy || code.trim().length === 0) return;
+    setError(null);
+    setSubmitting(true);
+    try {
+      await signIn("password", {
+        email: email.trim(),
+        code: code.trim(),
+        flow: "email-verification",
+      });
+      router.push("/dashboard");
+    } catch {
+      setError(t("errorVerify"));
+      setSubmitting(false);
+    }
+  }
+
+  // ── Password reset: request a code ────────────────────────────────────────
+  async function handleResetRequest(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    if (busy) return;
+    setError(null);
+
+    const trimmedEmail = email.trim();
+    if (!EMAIL_RE.test(trimmedEmail)) {
+      setError(t("errorEmail"));
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      await signIn("password", { email: trimmedEmail, flow: "reset" });
+      setSubmitting(false);
+      goTo("resetVerify");
+    } catch {
+      setError(t("errorGeneric"));
+      setSubmitting(false);
+    }
+  }
+
+  async function handleResend() {
+    if (busy) return;
+    setError(null);
+    try {
+      await signIn("password", { email: email.trim(), flow: "reset" });
+      setNotice(t("codeResent"));
+    } catch {
+      setError(t("errorGeneric"));
+    }
+  }
+
+  // ── Password reset: verify code + set new password ────────────────────────
+  async function handleResetVerify(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    if (busy) return;
+    setError(null);
+
+    if (newPassword.length < MIN_PASSWORD) {
+      setError(t("errorPasswordShort", { min: MIN_PASSWORD }));
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      await signIn("password", {
+        email: email.trim(),
+        code: code.trim(),
+        newPassword,
+        flow: "reset-verification",
+      });
+      router.push("/dashboard");
+    } catch {
+      setError(t("errorReset"));
+      setSubmitting(false);
+    }
+  }
+
   async function handleGoogle() {
-    if (submitting || googleLoading) return;
+    if (busy) return;
     setError(null);
     setGoogleLoading(true);
     try {
@@ -109,17 +209,14 @@ export default function AuthScreen({ mode }: { mode: Mode }) {
     }
   }
 
-  const busy = submitting || googleLoading;
-
   return (
     <div className="relative min-h-screen bg-paper lg:grid lg:grid-cols-[1.1fr_1fr]">
-      {/* Brand panel — the one deliberate dark surface, echoing the landing CTA band */}
+      {/* Brand panel */}
       <aside className="relative hidden overflow-hidden bg-navy lg:flex lg:flex-col lg:justify-between lg:p-12 xl:p-16">
         <div
           className="bg-grid-light pointer-events-none absolute inset-0 [mask-image:linear-gradient(to_bottom,black,transparent_92%)]"
           aria-hidden
         />
-        {/* soft emerald glow */}
         <div
           className="pointer-events-none absolute -left-24 top-1/3 h-80 w-80 rounded-full bg-emerald/20 blur-3xl"
           aria-hidden
@@ -159,7 +256,6 @@ export default function AuthScreen({ mode }: { mode: Mode }) {
           aria-hidden
         />
 
-        {/* Top bar */}
         <div className="relative flex items-center justify-between px-6 py-5 sm:px-10">
           <Link
             href="/"
@@ -171,159 +267,602 @@ export default function AuthScreen({ mode }: { mode: Mode }) {
           <LanguageSwitcher />
         </div>
 
-        {/* Card */}
         <div className="relative flex flex-1 items-center justify-center px-6 pb-16 pt-4 sm:px-10">
           <div className="animate-fade-up w-full max-w-sm">
-            {/* Wordmark only shows here on mobile, where the panel is hidden */}
             <Link href="/" className="mb-8 inline-flex lg:hidden" aria-label="outlay home">
               <Wordmark />
             </Link>
 
-            <h1 className="text-2xl font-semibold tracking-tight text-navy sm:text-[1.75rem]">
-              {isSignUp ? t("signUpTitle") : t("signInTitle")}
-            </h1>
-            <p className="mt-2 text-[15px] text-navy/60">
-              {isSignUp ? t("signUpSubtitle") : t("signInSubtitle")}
-            </p>
-
-            {/* Google */}
-            <button
-              type="button"
-              onClick={handleGoogle}
-              disabled={busy}
-              className="mt-7 inline-flex h-11 w-full cursor-pointer items-center justify-center gap-2.5 rounded-xl border border-navy/15 bg-white px-4 text-sm font-medium text-navy transition-colors hover:border-navy/30 disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              {googleLoading ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <GoogleIcon className="h-[18px] w-[18px]" />
-              )}
-              {t("google")}
-            </button>
-
-            {/* Divider */}
-            <div className="my-6 flex items-center gap-4">
-              <span className="h-px flex-1 bg-navy/10" />
-              <span className="text-xs font-medium uppercase tracking-wide text-navy/40">
-                {t("or")}
-              </span>
-              <span className="h-px flex-1 bg-navy/10" />
-            </div>
-
-            <form onSubmit={handleSubmit} noValidate className="space-y-4">
-              {isSignUp && (
-                <Field
-                  id="name"
-                  label={t("name")}
-                  type="text"
-                  autoComplete="name"
-                  placeholder={t("namePlaceholder")}
-                  value={name}
-                  onChange={(v) => {
-                    setName(v);
-                    if (error) setError(null);
-                  }}
-                  disabled={busy}
-                />
-              )}
-
-              <Field
-                id="email"
-                label={t("email")}
-                type="email"
-                inputMode="email"
-                autoComplete="email"
-                placeholder={t("emailPlaceholder")}
-                value={email}
-                onChange={(v) => {
-                  setEmail(v);
-                  if (error) setError(null);
-                }}
-                disabled={busy}
+            {phase === "credentials" && (
+              <CredentialsForm
+                t={t}
+                isSignUp={isSignUp}
+                name={name}
+                setName={setName}
+                email={email}
+                setEmail={setEmail}
+                password={password}
+                setPassword={setPassword}
+                showPassword={showPassword}
+                setShowPassword={setShowPassword}
+                submitting={submitting}
+                googleLoading={googleLoading}
+                busy={busy}
+                error={error}
+                onSubmit={handleCredentials}
+                onGoogle={handleGoogle}
+                onForgot={() => goTo("resetRequest")}
+                clearError={() => error && setError(null)}
               />
+            )}
 
-              <div>
-                <label
-                  htmlFor="password"
-                  className="mb-1.5 block text-sm font-medium text-navy"
-                >
-                  {t("password")}
-                </label>
-                <div className="relative">
-                  <input
-                    id="password"
-                    type={showPassword ? "text" : "password"}
-                    autoComplete={isSignUp ? "new-password" : "current-password"}
-                    placeholder={t("passwordPlaceholder")}
-                    value={password}
-                    onChange={(e) => {
-                      setPassword(e.target.value);
-                      if (error) setError(null);
-                    }}
-                    disabled={busy}
-                    className="h-11 w-full rounded-xl border border-navy/15 bg-white pl-3.5 pr-11 text-sm text-navy placeholder:text-navy/40 transition-colors focus:border-emerald-ink focus:outline-none focus:ring-2 focus:ring-emerald-ink/30 disabled:opacity-60"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword((s) => !s)}
-                    aria-label={showPassword ? t("hidePassword") : t("showPassword")}
-                    className="absolute right-1 top-1/2 flex h-9 w-9 -translate-y-1/2 cursor-pointer items-center justify-center rounded-lg text-navy/40 transition-colors hover:text-navy"
-                  >
-                    {showPassword ? (
-                      <EyeOff className="h-4 w-4" />
-                    ) : (
-                      <Eye className="h-4 w-4" />
-                    )}
-                  </button>
-                </div>
-                {isSignUp && (
-                  <p className="mt-1.5 text-xs text-navy/50">{t("passwordHint", { min: MIN_PASSWORD })}</p>
-                )}
-              </div>
+            {phase === "verifyEmail" && (
+              <CodeForm
+                icon={<MailCheck className="h-6 w-6" />}
+                title={t("verifyTitle")}
+                subtitle={t("verifySubtitle", { email: email.trim() })}
+                codeLabel={t("code")}
+                codePlaceholder={t("codePlaceholder")}
+                code={code}
+                setCode={setCode}
+                cta={t("verifyCta")}
+                submitting={submitting}
+                busy={busy}
+                error={error}
+                notice={notice}
+                onSubmit={handleVerify}
+                onBack={() => {
+                  setCode("");
+                  goTo("credentials");
+                }}
+                backLabel={t("backToSignIn")}
+                clearError={() => error && setError(null)}
+              />
+            )}
 
-              {error && (
-                <p
-                  role="alert"
-                  className="rounded-lg border border-amber-ink/20 bg-amber/5 px-3 py-2 text-sm text-amber-ink"
-                >
-                  {error}
-                </p>
-              )}
+            {phase === "resetRequest" && (
+              <ResetRequestForm
+                t={t}
+                email={email}
+                setEmail={setEmail}
+                submitting={submitting}
+                busy={busy}
+                error={error}
+                onSubmit={handleResetRequest}
+                onBack={() => goTo("credentials")}
+                clearError={() => error && setError(null)}
+              />
+            )}
 
-              <button
-                type="submit"
-                disabled={busy}
-                className="inline-flex h-11 w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-emerald-ink px-4 text-sm font-medium text-paper transition-colors hover:bg-emerald-ink/90 focus:outline-none focus:ring-2 focus:ring-emerald-ink/40 focus:ring-offset-2 focus:ring-offset-paper disabled:cursor-not-allowed disabled:opacity-70"
-              >
-                {submitting ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <>
-                    {isSignUp ? t("signUpCta") : t("signInCta")}
-                    <ArrowRight className="h-4 w-4" />
-                  </>
-                )}
-              </button>
-            </form>
-
-            <p className="mt-6 text-center text-sm text-navy/60">
-              {isSignUp ? t("haveAccount") : t("noAccount")}{" "}
-              <Link
-                href={isSignUp ? "/signin" : "/signup"}
-                className="font-medium text-emerald-ink underline-offset-4 hover:underline"
-              >
-                {isSignUp ? t("signInLink") : t("signUpLink")}
-              </Link>
-            </p>
-
-            {isSignUp && (
-              <p className="mt-6 text-center text-xs leading-relaxed text-navy/45">
-                {t("terms")}
-              </p>
+            {phase === "resetVerify" && (
+              <ResetVerifyForm
+                t={t}
+                email={email}
+                code={code}
+                setCode={setCode}
+                newPassword={newPassword}
+                setNewPassword={setNewPassword}
+                showPassword={showPassword}
+                setShowPassword={setShowPassword}
+                submitting={submitting}
+                busy={busy}
+                error={error}
+                notice={notice}
+                onSubmit={handleResetVerify}
+                onResend={handleResend}
+                onBack={() => goTo("credentials")}
+                clearError={() => error && setError(null)}
+              />
             )}
           </div>
         </div>
       </main>
+    </div>
+  );
+}
+
+type T = ReturnType<typeof useTranslations>;
+
+function ErrorNote({ children }: { children: React.ReactNode }) {
+  return (
+    <p
+      role="alert"
+      className="rounded-lg border border-amber-ink/20 bg-amber/5 px-3 py-2 text-sm text-amber-ink"
+    >
+      {children}
+    </p>
+  );
+}
+
+function SubmitButton({
+  submitting,
+  busy,
+  label,
+}: {
+  submitting: boolean;
+  busy: boolean;
+  label: string;
+}) {
+  return (
+    <button
+      type="submit"
+      disabled={busy}
+      className="inline-flex h-11 w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-emerald-ink px-4 text-sm font-medium text-paper transition-colors hover:bg-emerald-ink/90 focus:outline-none focus:ring-2 focus:ring-emerald-ink/40 focus:ring-offset-2 focus:ring-offset-paper disabled:cursor-not-allowed disabled:opacity-70"
+    >
+      {submitting ? (
+        <Loader2 className="h-4 w-4 animate-spin" />
+      ) : (
+        <>
+          {label}
+          <ArrowRight className="h-4 w-4" />
+        </>
+      )}
+    </button>
+  );
+}
+
+function CredentialsForm({
+  t,
+  isSignUp,
+  name,
+  setName,
+  email,
+  setEmail,
+  password,
+  setPassword,
+  showPassword,
+  setShowPassword,
+  submitting,
+  googleLoading,
+  busy,
+  error,
+  onSubmit,
+  onGoogle,
+  onForgot,
+  clearError,
+}: {
+  t: T;
+  isSignUp: boolean;
+  name: string;
+  setName: (v: string) => void;
+  email: string;
+  setEmail: (v: string) => void;
+  password: string;
+  setPassword: (v: string) => void;
+  showPassword: boolean;
+  setShowPassword: (fn: (s: boolean) => boolean) => void;
+  submitting: boolean;
+  googleLoading: boolean;
+  busy: boolean;
+  error: string | null;
+  onSubmit: (e: FormEvent<HTMLFormElement>) => void;
+  onGoogle: () => void;
+  onForgot: () => void;
+  clearError: () => void;
+}) {
+  return (
+    <>
+      <h1 className="text-2xl font-semibold tracking-tight text-navy sm:text-[1.75rem]">
+        {isSignUp ? t("signUpTitle") : t("signInTitle")}
+      </h1>
+      <p className="mt-2 text-[15px] text-navy/60">
+        {isSignUp ? t("signUpSubtitle") : t("signInSubtitle")}
+      </p>
+
+      <button
+        type="button"
+        onClick={onGoogle}
+        disabled={busy}
+        className="mt-7 inline-flex h-11 w-full cursor-pointer items-center justify-center gap-2.5 rounded-xl border border-navy/15 bg-white px-4 text-sm font-medium text-navy transition-colors hover:border-navy/30 disabled:cursor-not-allowed disabled:opacity-60"
+      >
+        {googleLoading ? (
+          <Loader2 className="h-4 w-4 animate-spin" />
+        ) : (
+          <GoogleIcon className="h-[18px] w-[18px]" />
+        )}
+        {t("google")}
+      </button>
+
+      <div className="my-6 flex items-center gap-4">
+        <span className="h-px flex-1 bg-navy/10" />
+        <span className="text-xs font-medium uppercase tracking-wide text-navy/40">
+          {t("or")}
+        </span>
+        <span className="h-px flex-1 bg-navy/10" />
+      </div>
+
+      <form onSubmit={onSubmit} noValidate className="space-y-4">
+        {isSignUp && (
+          <Field
+            id="name"
+            label={t("name")}
+            type="text"
+            autoComplete="name"
+            placeholder={t("namePlaceholder")}
+            value={name}
+            onChange={(v) => {
+              setName(v);
+              clearError();
+            }}
+            disabled={busy}
+          />
+        )}
+
+        <Field
+          id="email"
+          label={t("email")}
+          type="email"
+          inputMode="email"
+          autoComplete="email"
+          placeholder={t("emailPlaceholder")}
+          value={email}
+          onChange={(v) => {
+            setEmail(v);
+            clearError();
+          }}
+          disabled={busy}
+        />
+
+        <div>
+          <div className="mb-1.5 flex items-center justify-between">
+            <label htmlFor="password" className="block text-sm font-medium text-navy">
+              {t("password")}
+            </label>
+            {!isSignUp && (
+              <button
+                type="button"
+                onClick={onForgot}
+                className="text-xs font-medium text-emerald-ink underline-offset-4 hover:underline"
+              >
+                {t("forgotPassword")}
+              </button>
+            )}
+          </div>
+          <div className="relative">
+            <input
+              id="password"
+              type={showPassword ? "text" : "password"}
+              autoComplete={isSignUp ? "new-password" : "current-password"}
+              placeholder={t("passwordPlaceholder")}
+              value={password}
+              onChange={(e) => {
+                setPassword(e.target.value);
+                clearError();
+              }}
+              disabled={busy}
+              className="h-11 w-full rounded-xl border border-navy/15 bg-white pl-3.5 pr-11 text-sm text-navy placeholder:text-navy/40 transition-colors focus:border-emerald-ink focus:outline-none focus:ring-2 focus:ring-emerald-ink/30 disabled:opacity-60"
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword((s) => !s)}
+              aria-label={showPassword ? t("hidePassword") : t("showPassword")}
+              className="absolute right-1 top-1/2 flex h-9 w-9 -translate-y-1/2 cursor-pointer items-center justify-center rounded-lg text-navy/40 transition-colors hover:text-navy"
+            >
+              {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            </button>
+          </div>
+          {isSignUp && (
+            <p className="mt-1.5 text-xs text-navy/50">
+              {t("passwordHint", { min: MIN_PASSWORD })}
+            </p>
+          )}
+        </div>
+
+        {error && <ErrorNote>{error}</ErrorNote>}
+
+        <SubmitButton
+          submitting={submitting}
+          busy={busy}
+          label={isSignUp ? t("signUpCta") : t("signInCta")}
+        />
+      </form>
+
+      <p className="mt-6 text-center text-sm text-navy/60">
+        {isSignUp ? t("haveAccount") : t("noAccount")}{" "}
+        <Link
+          href={isSignUp ? "/signin" : "/signup"}
+          className="font-medium text-emerald-ink underline-offset-4 hover:underline"
+        >
+          {isSignUp ? t("signInLink") : t("signUpLink")}
+        </Link>
+      </p>
+
+      {isSignUp && (
+        <p className="mt-6 text-center text-xs leading-relaxed text-navy/45">
+          {t("terms")}
+        </p>
+      )}
+    </>
+  );
+}
+
+function CodeForm({
+  icon,
+  title,
+  subtitle,
+  codeLabel,
+  codePlaceholder,
+  code,
+  setCode,
+  cta,
+  submitting,
+  busy,
+  error,
+  notice,
+  onSubmit,
+  onBack,
+  backLabel,
+  onResend,
+  resendLabel,
+  clearError,
+  children,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  subtitle: string;
+  codeLabel: string;
+  codePlaceholder: string;
+  code: string;
+  setCode: (v: string) => void;
+  cta: string;
+  submitting: boolean;
+  busy: boolean;
+  error: string | null;
+  notice: string | null;
+  onSubmit: (e: FormEvent<HTMLFormElement>) => void;
+  onBack: () => void;
+  backLabel: string;
+  onResend?: () => void;
+  resendLabel?: string;
+  clearError: () => void;
+  children?: React.ReactNode;
+}) {
+  return (
+    <>
+      <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald/10 text-emerald-ink">
+        {icon}
+      </span>
+      <h1 className="mt-5 text-2xl font-semibold tracking-tight text-navy sm:text-[1.75rem]">
+        {title}
+      </h1>
+      <p className="mt-2 text-[15px] leading-relaxed text-navy/60">{subtitle}</p>
+
+      <form onSubmit={onSubmit} noValidate className="mt-7 space-y-4">
+        <CodeField
+          label={codeLabel}
+          placeholder={codePlaceholder}
+          value={code}
+          onChange={(v) => {
+            setCode(v);
+            clearError();
+          }}
+          disabled={busy}
+        />
+
+        {children}
+
+        {error && <ErrorNote>{error}</ErrorNote>}
+        {notice && !error && (
+          <p className="rounded-lg border border-emerald-ink/20 bg-emerald/5 px-3 py-2 text-sm text-emerald-ink">
+            {notice}
+          </p>
+        )}
+
+        <SubmitButton submitting={submitting} busy={busy} label={cta} />
+      </form>
+
+      <div className="mt-6 flex items-center justify-center gap-4 text-sm">
+        <button
+          type="button"
+          onClick={onBack}
+          className="font-medium text-navy/60 transition-colors hover:text-navy"
+        >
+          {backLabel}
+        </button>
+        {onResend && resendLabel && (
+          <>
+            <span className="text-navy/20">·</span>
+            <button
+              type="button"
+              onClick={onResend}
+              disabled={busy}
+              className="font-medium text-emerald-ink underline-offset-4 hover:underline disabled:opacity-60"
+            >
+              {resendLabel}
+            </button>
+          </>
+        )}
+      </div>
+    </>
+  );
+}
+
+function ResetRequestForm({
+  t,
+  email,
+  setEmail,
+  submitting,
+  busy,
+  error,
+  onSubmit,
+  onBack,
+  clearError,
+}: {
+  t: T;
+  email: string;
+  setEmail: (v: string) => void;
+  submitting: boolean;
+  busy: boolean;
+  error: string | null;
+  onSubmit: (e: FormEvent<HTMLFormElement>) => void;
+  onBack: () => void;
+  clearError: () => void;
+}) {
+  return (
+    <>
+      <h1 className="text-2xl font-semibold tracking-tight text-navy sm:text-[1.75rem]">
+        {t("resetTitle")}
+      </h1>
+      <p className="mt-2 text-[15px] text-navy/60">{t("resetSubtitle")}</p>
+
+      <form onSubmit={onSubmit} noValidate className="mt-7 space-y-4">
+        <Field
+          id="reset-email"
+          label={t("email")}
+          type="email"
+          inputMode="email"
+          autoComplete="email"
+          placeholder={t("emailPlaceholder")}
+          value={email}
+          onChange={(v) => {
+            setEmail(v);
+            clearError();
+          }}
+          disabled={busy}
+        />
+
+        {error && <ErrorNote>{error}</ErrorNote>}
+
+        <SubmitButton submitting={submitting} busy={busy} label={t("resetCta")} />
+      </form>
+
+      <div className="mt-6 text-center text-sm">
+        <button
+          type="button"
+          onClick={onBack}
+          className="font-medium text-navy/60 transition-colors hover:text-navy"
+        >
+          {t("backToSignIn")}
+        </button>
+      </div>
+    </>
+  );
+}
+
+function ResetVerifyForm({
+  t,
+  email,
+  code,
+  setCode,
+  newPassword,
+  setNewPassword,
+  showPassword,
+  setShowPassword,
+  submitting,
+  busy,
+  error,
+  notice,
+  onSubmit,
+  onResend,
+  onBack,
+  clearError,
+}: {
+  t: T;
+  email: string;
+  code: string;
+  setCode: (v: string) => void;
+  newPassword: string;
+  setNewPassword: (v: string) => void;
+  showPassword: boolean;
+  setShowPassword: (fn: (s: boolean) => boolean) => void;
+  submitting: boolean;
+  busy: boolean;
+  error: string | null;
+  notice: string | null;
+  onSubmit: (e: FormEvent<HTMLFormElement>) => void;
+  onResend: () => void;
+  onBack: () => void;
+  clearError: () => void;
+}) {
+  return (
+    <CodeForm
+      icon={<MailCheck className="h-6 w-6" />}
+      title={t("resetVerifyTitle")}
+      subtitle={t("resetVerifySubtitle", { email: email.trim() })}
+      codeLabel={t("code")}
+      codePlaceholder={t("codePlaceholder")}
+      code={code}
+      setCode={setCode}
+      cta={t("resetVerifyCta")}
+      submitting={submitting}
+      busy={busy}
+      error={error}
+      notice={notice}
+      onSubmit={onSubmit}
+      onBack={onBack}
+      backLabel={t("backToSignIn")}
+      onResend={onResend}
+      resendLabel={t("resendCode")}
+      clearError={clearError}
+    >
+      <div>
+        <label
+          htmlFor="new-password"
+          className="mb-1.5 block text-sm font-medium text-navy"
+        >
+          {t("newPassword")}
+        </label>
+        <div className="relative">
+          <input
+            id="new-password"
+            type={showPassword ? "text" : "password"}
+            autoComplete="new-password"
+            placeholder={t("passwordPlaceholder")}
+            value={newPassword}
+            onChange={(e) => {
+              setNewPassword(e.target.value);
+              clearError();
+            }}
+            disabled={busy}
+            className="h-11 w-full rounded-xl border border-navy/15 bg-white pl-3.5 pr-11 text-sm text-navy placeholder:text-navy/40 transition-colors focus:border-emerald-ink focus:outline-none focus:ring-2 focus:ring-emerald-ink/30 disabled:opacity-60"
+          />
+          <button
+            type="button"
+            onClick={() => setShowPassword((s) => !s)}
+            aria-label={showPassword ? t("hidePassword") : t("showPassword")}
+            className="absolute right-1 top-1/2 flex h-9 w-9 -translate-y-1/2 cursor-pointer items-center justify-center rounded-lg text-navy/40 transition-colors hover:text-navy"
+          >
+            {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+          </button>
+        </div>
+        <p className="mt-1.5 text-xs text-navy/50">
+          {t("passwordHint", { min: MIN_PASSWORD })}
+        </p>
+      </div>
+    </CodeForm>
+  );
+}
+
+function CodeField({
+  label,
+  placeholder,
+  value,
+  onChange,
+  disabled,
+}: {
+  label: string;
+  placeholder: string;
+  value: string;
+  onChange: (v: string) => void;
+  disabled?: boolean;
+}) {
+  return (
+    <div>
+      <label htmlFor="otp" className="mb-1.5 block text-sm font-medium text-navy">
+        {label}
+      </label>
+      <input
+        id="otp"
+        type="text"
+        inputMode="numeric"
+        autoComplete="one-time-code"
+        maxLength={6}
+        placeholder={placeholder}
+        value={value}
+        onChange={(e) => onChange(e.target.value.replace(/[^0-9]/g, ""))}
+        disabled={disabled}
+        className="h-12 w-full rounded-xl border border-navy/15 bg-white px-3.5 text-center font-mono text-lg tracking-[0.5em] text-navy placeholder:tracking-[0.5em] placeholder:text-navy/30 transition-colors focus:border-emerald-ink focus:outline-none focus:ring-2 focus:ring-emerald-ink/30 disabled:opacity-60"
+      />
     </div>
   );
 }

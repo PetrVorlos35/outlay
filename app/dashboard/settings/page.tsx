@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { useQuery } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
 import { useAuthActions } from "@convex-dev/auth/react";
 import { LogOut } from "lucide-react";
 import { api } from "@/convex/_generated/api";
@@ -22,12 +22,26 @@ export default function SettingsPage() {
   const viewer = useQuery(api.users.viewer);
 
   const [name, setName] = useState("");
-  const [lead, setLead] = useState("3");
-  const [priceHike, setPriceHike] = useState(true);
-  const [weekly, setWeekly] = useState(false);
 
-  // Mock persistence: in lieu of a backend, confirm the change optimistically.
+  // Per-user notification preferences from Convex.
+  const prefs = useQuery(api.preferences.get);
+  const setPrefs = useMutation(api.preferences.set);
+  const prefsLoading = prefs === undefined;
+  const lead = String(prefs?.reminderLeadDays ?? 3);
+  const priceHike = prefs?.priceHikeAlerts ?? true;
+  const weekly = prefs?.weeklySummary ?? false;
+
   const saved = () => notify(toast("saved"));
+
+  function updatePrefs(
+    patch: Partial<{
+      reminderLeadDays: 1 | 3 | 7;
+      priceHikeAlerts: boolean;
+      weeklySummary: boolean;
+    }>,
+  ) {
+    void setPrefs(patch).then(saved);
+  }
 
   async function handleSignOut() {
     await signOut();
@@ -73,11 +87,11 @@ export default function SettingsPage() {
             <Row label={t("leadTime")} hint={t("leadTimeHint")}>
               <select
                 value={lead}
-                onChange={(e) => {
-                  setLead(e.target.value);
-                  saved();
-                }}
-                className="h-10 cursor-pointer rounded-xl border border-navy/15 bg-white px-3 text-sm text-navy transition-colors focus:border-emerald-ink focus:outline-none focus:ring-2 focus:ring-emerald-ink/30"
+                disabled={prefsLoading}
+                onChange={(e) =>
+                  updatePrefs({ reminderLeadDays: Number(e.target.value) as 1 | 3 | 7 })
+                }
+                className="h-10 cursor-pointer rounded-xl border border-navy/15 bg-white px-3 text-sm text-navy transition-colors focus:border-emerald-ink focus:outline-none focus:ring-2 focus:ring-emerald-ink/30 disabled:opacity-60"
               >
                 <option value="1">{t("lead1")}</option>
                 <option value="3">{t("lead3")}</option>
@@ -87,20 +101,16 @@ export default function SettingsPage() {
             <Row label={t("priceHike")} hint={t("priceHikeHint")}>
               <Toggle
                 checked={priceHike}
-                onChange={(v) => {
-                  setPriceHike(v);
-                  saved();
-                }}
+                disabled={prefsLoading}
+                onChange={(v) => updatePrefs({ priceHikeAlerts: v })}
                 label={t("priceHike")}
               />
             </Row>
             <Row label={t("weekly")} hint={t("weeklyHint")}>
               <Toggle
                 checked={weekly}
-                onChange={(v) => {
-                  setWeekly(v);
-                  saved();
-                }}
+                disabled={prefsLoading}
+                onChange={(v) => updatePrefs({ weeklySummary: v })}
                 label={t("weekly")}
               />
             </Row>
@@ -187,10 +197,12 @@ function Toggle({
   checked,
   onChange,
   label,
+  disabled,
 }: {
   checked: boolean;
   onChange: (v: boolean) => void;
   label: string;
+  disabled?: boolean;
 }) {
   return (
     <button
@@ -198,8 +210,9 @@ function Toggle({
       role="switch"
       aria-checked={checked}
       aria-label={label}
+      disabled={disabled}
       onClick={() => onChange(!checked)}
-      className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-ink/40 focus:ring-offset-2 focus:ring-offset-white ${
+      className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-ink/40 focus:ring-offset-2 focus:ring-offset-white disabled:cursor-not-allowed disabled:opacity-60 ${
         checked ? "bg-emerald-ink" : "bg-navy/20"
       }`}
     >

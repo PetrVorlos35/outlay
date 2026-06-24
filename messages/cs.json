@@ -74,20 +74,19 @@
   "footer": {
     "tagline": "Každá pravidelná platba, vždy na očích. Odebírejte novinky, jak je vydáváme.",
     "product": "Produkt",
-    "company": "Společnost",
     "legal": "Právní",
     "linkFeatures": "Funkce",
     "linkHow": "Jak to funguje",
     "linkPricing": "Ceník",
-    "linkChangelog": "Novinky",
-    "linkAbout": "O nás",
-    "linkBlog": "Blog",
-    "linkCareers": "Kariéra",
     "linkPrivacy": "Soukromí",
     "linkTerms": "Podmínky",
     "linkSecurity": "Zabezpečení",
-    "rights": "© {year} outlay. Všechna práva vyhrazena.",
+    "copyright": "© {year} <link>Petr Vorlíček</link>. Vytvořeno s důrazem na detail.",
     "madeFor": "Pro lidi, kteří nesnášejí překvapivé platby."
+  },
+  "legal": {
+    "updated": "Naposledy aktualizováno {date}",
+    "backHome": "Zpět na úvod"
   },
   "newsletter": {
     "placeholder": "vas@email.cz",
@@ -125,6 +124,24 @@
     "errorSignIn": "Nesprávný e-mail nebo heslo. Zkuste to prosím znovu.",
     "errorSignUp": "Účet se nepodařilo vytvořit. Tento e-mail už možná někdo používá.",
     "errorGeneric": "Něco se pokazilo. Zkuste to prosím znovu.",
+    "forgotPassword": "Zapomněli jste heslo?",
+    "code": "Ověřovací kód",
+    "codePlaceholder": "123456",
+    "verifyTitle": "Zkontrolujte e-mail",
+    "verifySubtitle": "Poslali jsme 6místný kód na {email}. Zadejte jej pro ověření účtu.",
+    "verifyCta": "Ověřit a pokračovat",
+    "errorVerify": "Kód je nesprávný nebo vypršel. Zkuste to prosím znovu.",
+    "resetTitle": "Obnovení hesla",
+    "resetSubtitle": "Zadejte e-mail a pošleme vám kód pro obnovení.",
+    "resetCta": "Odeslat kód",
+    "resetVerifyTitle": "Nastavte nové heslo",
+    "resetVerifySubtitle": "Zadejte kód, který jsme poslali na {email}, a zvolte nové heslo.",
+    "newPassword": "Nové heslo",
+    "resetVerifyCta": "Obnovit heslo a přihlásit se",
+    "resendCode": "Poslat kód znovu",
+    "codeResent": "Nový kód je na cestě.",
+    "backToSignIn": "Zpět na přihlášení",
+    "errorReset": "Heslo se nepodařilo obnovit. Zkontrolujte kód a zkuste to znovu.",
     "panelTitle": "Každá pravidelná platba, vždy na očích.",
     "panelBody": "Připojte se k outlay a přestaňte se nechat zaskočit obnoveními.",
     "panelPoint1": "Všechna předplatná na jednom přehledném panelu",
@@ -174,6 +191,10 @@
       "tomorrow": "Obnoví se zítra",
       "inDays": "Obnoví se za {days, plural, one {# den} few {# dny} other {# dní}}",
       "overdue": "Obnovení po termínu"
+    },
+    "due": {
+      "paid": "Zaplaceno",
+      "cancel": "Zrušit"
     },
     "hike": {
       "label": "Cena vzrostla",
@@ -297,6 +318,8 @@
       "added": "{name} přidáno",
       "updated": "{name} upraveno",
       "deleted": "{name} smazáno",
+      "paid": "{name} označeno jako zaplacené — další platba posunuta",
+      "canceled": "{name} zrušeno",
       "saved": "Předvolby uloženy"
     }
   }

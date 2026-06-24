@@ -2,6 +2,8 @@
 
 import { useLocale, useTranslations } from "next-intl";
 import { ArrowDownRight } from "lucide-react";
+import SubLogo from "@/components/dashboard/SubLogo";
+import { logoUrl } from "@/lib/catalog";
 
 const TOTAL = 312.94;
 
@@ -10,17 +12,17 @@ const BARS = [62, 70, 58, 81, 74, 88, 95];
 
 type Renewal = {
   name: string;
-  monogram: string;
-  tint: string;
+  domain: string;
+  color: string;
   price: string;
   days: number;
 };
 
 const RENEWALS: Renewal[] = [
-  { name: "Netflix", monogram: "N", tint: "bg-[#E50914]", price: "15.49", days: 2 },
-  { name: "Spotify", monogram: "S", tint: "bg-[#1DB954]", price: "10.99", days: 9 },
-  { name: "Adobe CC", monogram: "A", tint: "bg-[#EB1000]", price: "54.99", days: 14 },
-  { name: "Figma", monogram: "F", tint: "bg-[#F24E1E]", price: "15.00", days: 21 },
+  { name: "Netflix", domain: "netflix.com", color: "#E50914", price: "15.49", days: 2 },
+  { name: "Spotify", domain: "spotify.com", color: "#1DB954", price: "10.99", days: 9 },
+  { name: "Adobe CC", domain: "adobe.com", color: "#FF0000", price: "54.99", days: 14 },
+  { name: "Figma", domain: "figma.com", color: "#F24E1E", price: "15.00", days: 21 },
 ];
 
 export default function ProductMock() {
@@ -93,12 +95,10 @@ export default function ProductMock() {
         <ul className="mt-2 -mb-1">
           {RENEWALS.map((r) => (
             <li key={r.name} className="flex items-center gap-3 py-2.5">
-              <span
-                className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-sm font-semibold text-white ${r.tint}`}
-                aria-hidden
-              >
-                {r.monogram}
-              </span>
+              <SubLogo
+                sub={{ name: r.name, color: r.color, logo: logoUrl(r.domain) }}
+                size="md"
+              />
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-medium text-navy">{r.name}</p>
                 <span

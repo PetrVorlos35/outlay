@@ -9,7 +9,14 @@
  */
 
 import type * as auth from "../auth.js";
+import type * as authEmail from "../authEmail.js";
+import type * as broadcast from "../broadcast.js";
+import type * as crons from "../crons.js";
+import type * as email from "../email.js";
 import type * as http from "../http.js";
+import type * as notifications from "../notifications.js";
+import type * as preferences from "../preferences.js";
+import type * as subscriptions from "../subscriptions.js";
 import type * as users from "../users.js";
 import type * as waitlist from "../waitlist.js";
 
@@ -21,7 +28,14 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   auth: typeof auth;
+  authEmail: typeof authEmail;
+  broadcast: typeof broadcast;
+  crons: typeof crons;
+  email: typeof email;
   http: typeof http;
+  notifications: typeof notifications;
+  preferences: typeof preferences;
+  subscriptions: typeof subscriptions;
   users: typeof users;
   waitlist: typeof waitlist;
 }>;
