@@ -19,6 +19,7 @@ export const category = v.union(
   v.literal("fitness"),
   v.literal("news"),
   v.literal("cloud"),
+  v.literal("finance"),
   v.literal("other"),
 );
 

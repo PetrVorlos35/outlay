@@ -12,6 +12,7 @@ export type Category =
   | "fitness"
   | "news"
   | "cloud"
+  | "finance"
   | "other";
 
 export type Subscription = {
@@ -53,6 +54,7 @@ export const CATEGORIES: Category[] = [
   "fitness",
   "news",
   "cloud",
+  "finance",
   "other",
 ];
 
