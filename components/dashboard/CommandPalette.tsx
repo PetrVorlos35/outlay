@@ -46,12 +46,13 @@ export default function CommandPalette() {
   const t = useTranslations("dashboard.palette");
   const tnav = useTranslations("dashboard.nav");
   const router = useRouter();
-  const { subscriptions, openAdd, openEdit } = useDashboard();
+  const { subscriptions, openAdd, openEdit, drawer } = useDashboard();
 
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [active, setActive] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
+  const listRef = useRef<HTMLDivElement>(null);
 
   const openPalette = useCallback(() => {
     setQuery("");
@@ -70,6 +71,8 @@ export default function CommandPalette() {
       }
       if (
         !open &&
+        !drawer.open &&
+        !e.repeat &&
         e.key.toLowerCase() === "n" &&
         !e.metaKey &&
         !e.ctrlKey &&
@@ -86,7 +89,7 @@ export default function CommandPalette() {
       window.removeEventListener("keydown", onKey);
       window.removeEventListener(OPEN_PALETTE_EVENT, openPalette);
     };
-  }, [open, openAdd, openPalette]);
+  }, [open, drawer.open, openAdd, openPalette]);
 
   // Focus the input and lock background scroll while open (DOM side-effects only).
   useEffect(() => {
@@ -148,6 +151,14 @@ export default function CommandPalette() {
   // Keep the active index in range as the list shrinks.
   const activeIndex = Math.min(active, Math.max(filtered.length - 1, 0));
 
+  // Scroll the active option into view as the arrows move through the list.
+  useEffect(() => {
+    if (!open) return;
+    listRef.current
+      ?.querySelector<HTMLElement>('[aria-selected="true"]')
+      ?.scrollIntoView({ block: "nearest" });
+  }, [activeIndex, open]);
+
   function onKeyDown(e: React.KeyboardEvent) {
     if (e.key === "ArrowDown") {
       e.preventDefault();
@@ -196,6 +207,7 @@ export default function CommandPalette() {
         </div>
 
         <div
+          ref={listRef}
           role="listbox"
           aria-label={t("placeholder")}
           className="max-h-[min(60vh,22rem)] overflow-y-auto p-1.5"

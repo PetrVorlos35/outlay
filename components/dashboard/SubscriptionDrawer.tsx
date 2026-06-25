@@ -139,7 +139,21 @@ export default function SubscriptionDrawer() {
       document.body.style.overflow = prev;
       document.removeEventListener("keydown", onKey);
       window.clearTimeout(focusId);
-      restoreFocus.current?.focus?.();
+      // Restore focus to a real, still-mounted trigger. If there isn't one
+      // (e.g. the drawer was opened by the "n" shortcut, where the trigger was
+      // <body>), explicitly blur whatever is focused so focus doesn't linger on
+      // the now-hidden name input and swallow subsequent keystrokes.
+      const target = restoreFocus.current;
+      if (
+        target &&
+        target !== document.body &&
+        target.isConnected &&
+        typeof target.focus === "function"
+      ) {
+        target.focus();
+      } else {
+        (document.activeElement as HTMLElement | null)?.blur?.();
+      }
     };
   }, [open, closeDrawer]);
 
