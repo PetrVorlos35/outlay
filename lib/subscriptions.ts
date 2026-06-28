@@ -2,6 +2,8 @@
 // `subscriptions` table so swapping mock data for live queries is mechanical:
 // every field here maps 1:1 to a column, and `id` stands in for `_id`.
 
+import { convert } from "./currency";
+
 export type BillingCycle = "weekly" | "monthly" | "quarterly" | "yearly";
 export type SubStatus = "active" | "paused";
 export type Category =
@@ -81,6 +83,21 @@ export function totalMonthly(subs: Subscription[]): number {
   return subs
     .filter((s) => s.status === "active")
     .reduce((sum, s) => sum + monthlyAmount(s.price, s.cycle), 0);
+}
+
+/** A subscription's monthly-normalized cost converted into `target` currency. */
+export function monthlyAmountIn(sub: Subscription, target: string): number {
+  return convert(monthlyAmount(sub.price, sub.cycle), sub.currency, target);
+}
+
+/**
+ * Sum of monthly spend across active subscriptions, each converted into
+ * `target` — so totals are correct even when subscriptions mix currencies.
+ */
+export function totalMonthlyIn(subs: Subscription[], target: string): number {
+  return subs
+    .filter((s) => s.status === "active")
+    .reduce((sum, s) => sum + monthlyAmountIn(s, target), 0);
 }
 
 export function hasPriceHike(sub: Subscription): boolean {

@@ -10,9 +10,19 @@ import {
   type Category,
   type SubStatus,
 } from "@/lib/subscriptions";
-import { searchCatalog, logoUrl, type CatalogEntry } from "@/lib/catalog";
+import {
+  searchCatalog,
+  findCatalogByName,
+  catalogPrice,
+  logoUrl,
+  guessLogoUrl,
+  type CatalogEntry,
+} from "@/lib/catalog";
 import { formatCurrency } from "@/lib/format";
+import { CURRENCY_SYMBOL } from "@/lib/currency";
 import { useDashboard } from "./DashboardProvider";
+import { useAccountCurrency } from "./useAccountCurrency";
+import { useCatalog } from "./useCatalog";
 import SubLogo from "./SubLogo";
 
 // Palette for newly-added subscriptions (mock seeds carry real brand colors).
@@ -66,6 +76,10 @@ export default function SubscriptionDrawer() {
   const tcat = useTranslations("dashboard.category");
   const ts = useTranslations("dashboard.status");
   const locale = useLocale();
+  // The account's chosen display currency (catalog prices convert to it on
+  // prefill). Editing an existing sub keeps whatever currency it was saved in.
+  const accountCurrency = useAccountCurrency();
+  const { entries: catalogEntries } = useCatalog();
   const {
     drawer,
     closeDrawer,
@@ -120,7 +134,8 @@ export default function SubscriptionDrawer() {
 
   // Catalog suggestions (add mode only); shown inline so the scroll container
   // never clips them.
-  const suggestions = !isEdit && comboOpen ? searchCatalog(fields.name) : [];
+  const suggestions =
+    !isEdit && comboOpen ? searchCatalog(fields.name, catalogEntries) : [];
   const showSuggestions = suggestions.length > 0;
 
   // DOM side-effects while open: capture focus, lock scroll, Esc to close,
@@ -180,10 +195,18 @@ export default function SubscriptionDrawer() {
     if (errors[key]) setErrors((e) => ({ ...e, [key]: undefined }));
   }
 
-  // Typing a name (add mode): treat as a custom entry — drop any catalog logo
-  // and derive a fallback tile color — and keep the suggestion list open.
+  // Typing a name (add mode): if it exactly matches a catalog service, use that
+  // service's real logo and brand color; otherwise treat it as a custom entry and
+  // guess a brand logo from the name (monogram fallback if it 404s). Keep the
+  // suggestion list open either way.
   function handleNameChange(value: string) {
-    setFields((f) => ({ ...f, name: value, logo: undefined, color: colorFor(value) }));
+    const match = findCatalogByName(value, catalogEntries);
+    setFields((f) => ({
+      ...f,
+      name: value,
+      logo: match ? logoUrl(match.domain) : guessLogoUrl(value),
+      color: match ? match.color : colorFor(value),
+    }));
     if (errors.name) setErrors((e) => ({ ...e, name: undefined }));
     setComboOpen(true);
     setActiveIndex(-1);
@@ -193,7 +216,7 @@ export default function SubscriptionDrawer() {
     setFields((f) => ({
       ...f,
       name: entry.name,
-      price: String(entry.price),
+      price: String(catalogPrice(entry, accountCurrency)),
       cycle: entry.cycle,
       category: entry.category,
       color: entry.color,
@@ -250,6 +273,7 @@ export default function SubscriptionDrawer() {
       status: fields.status,
       color: fields.color || editing?.color || colorFor(name),
       logo: fields.logo,
+      currency: editing?.currency ?? accountCurrency,
       previousPrice: editing?.previousPrice,
     };
 
@@ -398,7 +422,11 @@ export default function SubscriptionDrawer() {
                           {entry.name}
                         </span>
                         <span className="font-mono text-xs tabular-nums text-navy/55">
-                          {formatCurrency(entry.price, locale)}
+                          {formatCurrency(
+                            catalogPrice(entry, accountCurrency),
+                            locale,
+                            accountCurrency,
+                          )}
                         </span>
                       </button>
                     </li>
@@ -420,7 +448,7 @@ export default function SubscriptionDrawer() {
             >
               <div className="relative">
                 <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 font-mono text-sm text-navy/45">
-                  $
+                  {CURRENCY_SYMBOL[accountCurrency]}
                 </span>
                 <input
                   id="sub-price"
@@ -431,7 +459,9 @@ export default function SubscriptionDrawer() {
                   value={fields.price}
                   onChange={(e) => set("price", e.target.value)}
                   placeholder="0.00"
-                  className={`${inputCls(!!errors.price)} pl-7 font-mono tabular-nums`}
+                  className={`${inputCls(!!errors.price)} font-mono tabular-nums ${
+                    CURRENCY_SYMBOL[accountCurrency].length > 1 ? "pl-9" : "pl-7"
+                  }`}
                 />
               </div>
             </FieldShell>

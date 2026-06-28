@@ -290,7 +290,7 @@ function Row({
 
       {/* Monthly */}
       <td className="hidden px-4 py-3 text-right font-mono text-sm tabular-nums text-navy/65 sm:px-5 lg:table-cell">
-        {formatCurrency(monthlyAmount(sub.price, sub.cycle), locale)}
+        {formatCurrency(monthlyAmount(sub.price, sub.cycle), locale, sub.currency)}
       </td>
 
       {/* Next renewal (folded into the Service cell on mobile) */}
@@ -308,7 +308,7 @@ function Row({
         <span
           className={`font-mono text-sm font-medium tabular-nums ${paused ? "text-navy/50" : "text-navy"}`}
         >
-          {formatCurrency(sub.price, locale)}
+          {formatCurrency(sub.price, locale, sub.currency)}
         </span>
       </td>
 

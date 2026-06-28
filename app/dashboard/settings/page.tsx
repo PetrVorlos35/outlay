@@ -2,21 +2,29 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useMutation, useQuery } from "convex/react";
 import { useAuthActions } from "@convex-dev/auth/react";
 import { LogOut } from "lucide-react";
 import { api } from "@/convex/_generated/api";
+import {
+  currencyForLocale,
+  CURRENCY_SYMBOL,
+  type CurrencyCode,
+} from "@/lib/currency";
 import { PageHeader, Panel } from "@/components/dashboard/primitives";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 import { useDashboard } from "@/components/dashboard/DashboardProvider";
 import PageTitle from "@/components/dashboard/PageTitle";
+
+const CURRENCY_OPTIONS: CurrencyCode[] = ["USD", "EUR", "CZK", "GBP"];
 
 export default function SettingsPage() {
   const t = useTranslations("dashboard.settings");
   const tn = useTranslations("dashboard.nav");
   const toast = useTranslations("dashboard.toast");
   const router = useRouter();
+  const locale = useLocale();
   const { signOut } = useAuthActions();
   const { notify } = useDashboard();
   const viewer = useQuery(api.users.viewer);
@@ -30,6 +38,8 @@ export default function SettingsPage() {
   const lead = String(prefs?.reminderLeadDays ?? 3);
   const priceHike = prefs?.priceHikeAlerts ?? true;
   const weekly = prefs?.weeklySummary ?? false;
+  // Currency is independent of language; until chosen it follows the locale.
+  const currency = (prefs?.currency as CurrencyCode | undefined) ?? currencyForLocale(locale);
 
   const saved = () => notify(toast("saved"));
 
@@ -38,6 +48,7 @@ export default function SettingsPage() {
       reminderLeadDays: 1 | 3 | 7;
       priceHikeAlerts: boolean;
       weeklySummary: boolean;
+      currency: CurrencyCode;
     }>,
   ) {
     void setPrefs(patch).then(saved);
@@ -115,6 +126,26 @@ export default function SettingsPage() {
               />
             </Row>
           </div>
+        </Panel>
+
+        {/* Currency */}
+        <Panel title={t("currencyTitle")} subtitle={t("currencySubtitle")}>
+          <Row label={t("currencyLabel")} hint={t("currencyHint")}>
+            <select
+              value={currency}
+              disabled={prefsLoading}
+              onChange={(e) =>
+                updatePrefs({ currency: e.target.value as CurrencyCode })
+              }
+              className="h-10 cursor-pointer rounded-xl border border-navy/15 bg-white px-3 text-sm text-navy transition-colors focus:border-emerald-ink focus:outline-none focus:ring-2 focus:ring-emerald-ink/30 disabled:opacity-60"
+            >
+              {CURRENCY_OPTIONS.map((c) => (
+                <option key={c} value={c}>
+                  {c} — {CURRENCY_SYMBOL[c]}
+                </option>
+              ))}
+            </select>
+          </Row>
         </Panel>
 
         {/* Language */}

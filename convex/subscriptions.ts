@@ -5,6 +5,7 @@ import { internal } from "./_generated/api";
 import { billingCycle, category, subStatus } from "./schema";
 import { getPrefsForUser } from "./preferences";
 import { priceHikeEmail } from "./notifications";
+import { requireUserWithinWriteLimit } from "./rateLimits";
 
 type Cycle = "weekly" | "monthly" | "quarterly" | "yearly";
 
@@ -72,8 +73,7 @@ export const list = query({
 export const add = mutation({
   args: subscriptionInput,
   handler: async (ctx, args) => {
-    const userId = await getAuthUserId(ctx);
-    if (userId === null) throw new Error("Not authenticated");
+    const userId = await requireUserWithinWriteLimit(ctx);
 
     return await ctx.db.insert("subscriptions", {
       ...args,
@@ -87,8 +87,7 @@ export const add = mutation({
 export const update = mutation({
   args: { id: v.id("subscriptions"), ...subscriptionInput },
   handler: async (ctx, { id, ...fields }) => {
-    const userId = await getAuthUserId(ctx);
-    if (userId === null) throw new Error("Not authenticated");
+    const userId = await requireUserWithinWriteLimit(ctx);
 
     const existing = await ctx.db.get(id);
     if (!existing || existing.userId !== userId) {
@@ -143,8 +142,7 @@ export const update = mutation({
 export const markPaid = mutation({
   args: { id: v.id("subscriptions") },
   handler: async (ctx, { id }) => {
-    const userId = await getAuthUserId(ctx);
-    if (userId === null) throw new Error("Not authenticated");
+    const userId = await requireUserWithinWriteLimit(ctx);
 
     const existing = await ctx.db.get(id);
     if (!existing || existing.userId !== userId) {
@@ -170,8 +168,7 @@ export const markPaid = mutation({
 export const setRenewal = mutation({
   args: { id: v.id("subscriptions"), nextRenewal: v.string() },
   handler: async (ctx, { id, nextRenewal }) => {
-    const userId = await getAuthUserId(ctx);
-    if (userId === null) throw new Error("Not authenticated");
+    const userId = await requireUserWithinWriteLimit(ctx);
 
     const existing = await ctx.db.get(id);
     if (!existing || existing.userId !== userId) {
@@ -187,8 +184,7 @@ export const setRenewal = mutation({
 export const setStatus = mutation({
   args: { id: v.id("subscriptions"), status: subStatus },
   handler: async (ctx, { id, status }) => {
-    const userId = await getAuthUserId(ctx);
-    if (userId === null) throw new Error("Not authenticated");
+    const userId = await requireUserWithinWriteLimit(ctx);
 
     const existing = await ctx.db.get(id);
     if (!existing || existing.userId !== userId) {
@@ -203,8 +199,7 @@ export const setStatus = mutation({
 export const remove = mutation({
   args: { id: v.id("subscriptions") },
   handler: async (ctx, { id }) => {
-    const userId = await getAuthUserId(ctx);
-    if (userId === null) throw new Error("Not authenticated");
+    const userId = await requireUserWithinWriteLimit(ctx);
 
     const existing = await ctx.db.get(id);
     // Idempotent: someone else's row or an already-deleted row is a no-op.

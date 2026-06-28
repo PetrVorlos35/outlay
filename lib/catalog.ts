@@ -1,15 +1,22 @@
 import type { BillingCycle, Category } from "./subscriptions";
+import { convertFromUsd, type CurrencyCode } from "./currency";
 
 // Catalog of popular subscriptions used to prefill the add form. Prices are
-// sensible USD defaults the user can edit, and tiers are split out (e.g. Claude
+// sensible defaults the user can edit, and tiers are split out (e.g. Claude
 // Pro vs Max, Netflix Standard vs Premium) so picking the exact plan is one tap.
 // `domain` drives the logo lookup; tiers of one brand share a domain.
+//
+// `price` is the USD baseline. `priceCzk` is the real local Czech price where
+// known (see `CZK_PRICES`); otherwise we fall back to converting USD so every
+// service still resolves a CZK figure.
 
 export type CatalogEntry = {
   name: string;
   domain: string;
   color: string;
   price: number;
+  /** Real local CZK price when known; falls back to a converted value. */
+  priceCzk?: number;
   cycle: BillingCycle;
   category: Category;
 };
@@ -21,6 +28,37 @@ export type CatalogEntry = {
  */
 export function logoUrl(domain: string): string {
   return `https://icons.duckduckgo.com/ip3/${domain}.ico`;
+}
+
+// Tier/plan words stripped when guessing a brand domain, so "YouTube Premium"
+// resolves to youtube.com rather than youtubepremium.com.
+const TIER_WORDS = new Set([
+  "plus", "premium", "pro", "max", "basic", "standard", "ultimate", "ultra",
+  "individual", "family", "duo", "student", "personal", "business", "starter",
+  "essential", "lite", "advanced", "plan", "membership", "subscription",
+  "monthly", "yearly", "annual", "the", "app",
+]);
+
+/**
+ * Best-effort brand domain for a free-typed name, so custom subscriptions still
+ * get a real logo. Strips tier words and punctuation, joins what's left, and
+ * appends `.com`. <SubLogo> falls back to the monogram if the guess 404s, so a
+ * wrong guess is harmless.
+ */
+export function guessDomain(name: string): string {
+  const tokens = name
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, " ")
+    .split(/\s+/)
+    .filter((t) => t && !TIER_WORDS.has(t));
+  const slug = (tokens.length ? tokens : [name.toLowerCase().replace(/[^a-z0-9]/g, "")]).join("");
+  return slug ? `${slug}.com` : "";
+}
+
+/** Logo URL for a free-typed name, or undefined when nothing usable remains. */
+export function guessLogoUrl(name: string): string | undefined {
+  const domain = guessDomain(name);
+  return domain ? logoUrl(domain) : undefined;
 }
 
 export const CATALOG: CatalogEntry[] = [
@@ -262,6 +300,59 @@ export const CATALOG: CatalogEntry[] = [
   { name: "Hinge+", domain: "hinge.co", color: "#000000", price: 29.99, cycle: "monthly", category: "other" },
 ];
 
+// Real local Czech monthly prices (Kč) for services that publish CZK pricing.
+// Anything not listed falls back to a USD→CZK conversion in `czkPrice`. These
+// are editable defaults, same as the USD figures — verify against the provider.
+const CZK_PRICES: Record<string, number> = {
+  // Streaming
+  "Netflix Standard with ads": 199,
+  "Netflix Standard": 279,
+  "Netflix Premium": 329,
+  "Disney+ Basic": 199,
+  "Disney+ Premium": 269,
+  "Max Ad-Free": 199,
+  "Max Ultimate": 279,
+  "Apple TV+": 139,
+  // Music
+  "Spotify Premium": 169,
+  "Spotify Duo": 219,
+  "Spotify Family": 269,
+  "Spotify Student": 85,
+  "Apple Music": 109,
+  "Apple Music Family": 169,
+  "YouTube Premium": 179,
+  "YouTube Music": 149,
+  // Cloud
+  "iCloud+ 50GB": 25,
+  "iCloud+ 200GB": 79,
+  "iCloud+ 2TB": 249,
+  "Google One 100GB": 49,
+  "Google One 2TB": 249,
+  // Software
+  "Microsoft 365 Personal": 99,
+  "Microsoft 365 Family": 129,
+  // Gaming
+  "Xbox Game Pass Ultimate": 379,
+  "PC Game Pass": 279,
+  "PlayStation Plus Essential": 199,
+  // Finance
+  "Revolut Plus": 95,
+  "Revolut Premium": 220,
+  "Revolut Metal": 415,
+};
+
+/** The CZK price for an entry: explicit field, known local price, or converted. */
+export function czkPrice(entry: CatalogEntry): number {
+  return entry.priceCzk ?? CZK_PRICES[entry.name] ?? convertFromUsd(entry.price, "CZK");
+}
+
+/** The catalog price to prefill, in the account currency. */
+export function catalogPrice(entry: CatalogEntry, currency: CurrencyCode): number {
+  if (currency === "USD") return entry.price;
+  if (currency === "CZK") return czkPrice(entry);
+  return convertFromUsd(entry.price, currency);
+}
+
 /** A short, recognizable set surfaced as one-tap quick-adds on the empty state. */
 export const POPULAR_DOMAINS = [
   "Netflix Standard",
@@ -278,11 +369,21 @@ export const POPULAR: CatalogEntry[] = POPULAR_DOMAINS.map(
   (name) => CATALOG.find((c) => c.name === name)!,
 ).filter(Boolean);
 
-/** Case-insensitive substring match over the catalog, capped to `limit`. */
-export function searchCatalog(query: string, limit = 6): CatalogEntry[] {
+/** Names flagged as popular — used when seeding the remote catalog. */
+export const POPULAR_NAMES: ReadonlySet<string> = new Set(POPULAR_DOMAINS);
+
+/**
+ * Case-insensitive substring match over `entries` (defaults to the bundled
+ * catalog; the remote catalog is passed in when available), capped to `limit`.
+ */
+export function searchCatalog(
+  query: string,
+  entries: CatalogEntry[] = CATALOG,
+  limit = 6,
+): CatalogEntry[] {
   const q = query.trim().toLowerCase();
   if (!q) return [];
-  const matches = CATALOG.filter((c) => c.name.toLowerCase().includes(q));
+  const matches = entries.filter((c) => c.name.toLowerCase().includes(q));
   // Prioritize names that start with the query.
   matches.sort((a, b) => {
     const as = a.name.toLowerCase().startsWith(q) ? 0 : 1;
@@ -290,4 +391,14 @@ export function searchCatalog(query: string, limit = 6): CatalogEntry[] {
     return as - bs || a.name.localeCompare(b.name);
   });
   return matches.slice(0, limit);
+}
+
+/** Exact (case-insensitive) catalog match for a typed name, if any. */
+export function findCatalogByName(
+  name: string,
+  entries: CatalogEntry[] = CATALOG,
+): CatalogEntry | undefined {
+  const n = name.trim().toLowerCase();
+  if (!n) return undefined;
+  return entries.find((e) => e.name.toLowerCase() === n);
 }

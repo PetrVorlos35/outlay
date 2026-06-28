@@ -8,13 +8,15 @@ import { api } from "@/convex/_generated/api";
 import {
   currentMonthIso,
   hasPriceHike,
-  monthlyAmount,
-  totalMonthly,
+  monthlyAmountIn,
+  totalMonthlyIn,
   type Category,
 } from "@/lib/subscriptions";
 import type { SpendPoint } from "@/lib/mock";
 import { formatCurrency } from "@/lib/format";
+import { convert } from "@/lib/currency";
 import { useDashboard } from "@/components/dashboard/DashboardProvider";
+import { useAccountCurrency } from "@/components/dashboard/useAccountCurrency";
 import {
   EmptyState,
   PageHeader,
@@ -32,23 +34,26 @@ export default function InsightsPage() {
   const td = useTranslations("dashboard");
   const tcat = useTranslations("dashboard.category");
   const locale = useLocale();
+  const accountCurrency = useAccountCurrency();
   const { subscriptions, loading, openEdit } = useDashboard();
 
   const trendData = useQuery(api.spend.trend, { months: 7 });
 
   const data = useMemo(() => {
     const active = subscriptions.filter((s) => s.status === "active");
-    const monthly = totalMonthly(subscriptions);
+    // All figures normalized to the account currency so mixed-currency
+    // subscriptions sum and rank correctly.
+    const monthly = totalMonthlyIn(subscriptions, accountCurrency);
 
     const ranked = [...active]
-      .map((s) => ({ sub: s, monthly: monthlyAmount(s.price, s.cycle) }))
+      .map((s) => ({ sub: s, monthly: monthlyAmountIn(s, accountCurrency) }))
       .sort((a, b) => b.monthly - a.monthly);
 
     const byCategory = new Map<Category, number>();
     for (const s of active) {
       byCategory.set(
         s.category,
-        (byCategory.get(s.category) ?? 0) + monthlyAmount(s.price, s.cycle),
+        (byCategory.get(s.category) ?? 0) + monthlyAmountIn(s, accountCurrency),
       );
     }
     const categories = [...byCategory.entries()]
@@ -65,16 +70,20 @@ export default function InsightsPage() {
       hikes,
       avg: active.length > 0 ? monthly / active.length : 0,
     };
-  }, [subscriptions]);
+  }, [subscriptions, accountCurrency]);
 
-  // Real recorded history; fall back to this month live before the first snapshot.
+  // Real recorded history (stored in USD) converted to the account currency;
+  // fall back to this month live before the first snapshot.
   const history = useMemo<SpendPoint[]>(() => {
-    const real = trendData ?? [];
+    const real = (trendData ?? []).map((p) => ({
+      month: p.month,
+      amount: Math.round(convert(p.amount, "USD", accountCurrency) * 100) / 100,
+    }));
     if (real.length > 0) return real;
     return data.monthly > 0
       ? [{ month: currentMonthIso(), amount: Math.round(data.monthly * 100) / 100 }]
       : [];
-  }, [trendData, data.monthly]);
+  }, [trendData, data.monthly, accountCurrency]);
 
   const percent = (n: number) =>
     new Intl.NumberFormat(locale, {
@@ -118,11 +127,11 @@ export default function InsightsPage() {
       <div className="grid grid-cols-2 gap-px overflow-hidden rounded-2xl border border-navy/10 bg-navy/10 lg:grid-cols-4">
         <StatTile
           label={t("statMonthly")}
-          value={formatCurrency(data.monthly, locale)}
+          value={formatCurrency(data.monthly, locale, accountCurrency)}
         />
         <StatTile
           label={t("statAnnual")}
-          value={formatCurrency(data.monthly * 12, locale)}
+          value={formatCurrency(data.monthly * 12, locale, accountCurrency)}
         />
         <StatTile
           label={t("statActive")}
@@ -130,14 +139,14 @@ export default function InsightsPage() {
         />
         <StatTile
           label={t("statAvg")}
-          value={formatCurrency(data.avg, locale)}
+          value={formatCurrency(data.avg, locale, accountCurrency)}
         />
       </div>
 
       {/* Trend + category */}
       <div className="mt-6 grid gap-6 lg:grid-cols-[1.6fr_1fr]">
         <Panel title={t("trendTitle")} subtitle={t("trendSubtitle")}>
-          <SpendChart data={history} height={180} showLabels showAxis />
+          <SpendChart data={history} height={180} showLabels showAxis currency={accountCurrency} />
           <p className="mt-3 text-xs text-navy/40">{td("chart.estimate")}</p>
         </Panel>
 
@@ -158,7 +167,7 @@ export default function InsightsPage() {
                     {tcat(category)}
                   </span>
                   <span className="font-mono text-sm tabular-nums text-navy/70">
-                    {formatCurrency(amount, locale)}
+                    {formatCurrency(amount, locale, accountCurrency)}
                   </span>
                 </div>
                 <div className="h-2 w-full overflow-hidden rounded-full bg-navy/[0.06]">
@@ -192,7 +201,7 @@ export default function InsightsPage() {
                       {sub.name}
                     </span>
                     <span className="font-mono text-sm tabular-nums text-navy">
-                      {formatCurrency(monthly, locale)}
+                      {formatCurrency(monthly, locale, accountCurrency)}
                     </span>
                     <span className="w-12 shrink-0 text-right font-mono text-xs tabular-nums text-navy/45">
                       {percent(monthly)}
@@ -238,13 +247,14 @@ export default function InsightsPage() {
                           amount: formatCurrency(
                             sub.price - (sub.previousPrice ?? sub.price),
                             locale,
+                            sub.currency,
                           ),
-                          old: formatCurrency(sub.previousPrice ?? 0, locale),
+                          old: formatCurrency(sub.previousPrice ?? 0, locale, sub.currency),
                         })}
                       </span>
                     </div>
                     <span className="font-mono text-sm font-medium tabular-nums text-navy">
-                      {formatCurrency(sub.price, locale)}
+                      {formatCurrency(sub.price, locale, sub.currency)}
                     </span>
                   </button>
                 </li>

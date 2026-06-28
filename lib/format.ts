@@ -1,10 +1,13 @@
-// Locale-aware formatting. Currency is USD for now but routed through one
-// helper so it's a single swap when per-account currency lands.
+// Locale-aware formatting. When `currency` is omitted it follows the locale
+// (e.g. cs → CZK) via `currencyForLocale`; pass an explicit code to format a
+// specific subscription in its own stored currency.
+
+import { currencyForLocale } from "./currency";
 
 export function formatCurrency(
   amount: number,
   locale: string,
-  currency = "USD",
+  currency: string = currencyForLocale(locale),
   opts: Intl.NumberFormatOptions = {},
 ): string {
   return new Intl.NumberFormat(locale, {
@@ -14,11 +17,11 @@ export function formatCurrency(
   }).format(amount);
 }
 
-/** Whole-dollar currency, for axis labels and dense figures. */
+/** Whole-unit currency, for axis labels and dense figures. */
 export function formatCurrencyShort(
   amount: number,
   locale: string,
-  currency = "USD",
+  currency: string = currencyForLocale(locale),
 ): string {
   return formatCurrency(amount, locale, currency, {
     minimumFractionDigits: 0,

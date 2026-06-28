@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
@@ -21,6 +21,10 @@ import LanguageSwitcher from "@/components/LanguageSwitcher";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const MIN_PASSWORD = 8;
+const OTP_LENGTH = 6;
+// Must stay >= the server-side `sendOtp` window in convex/rateLimits.ts so the
+// button only re-enables once the server will actually accept another send.
+const RESEND_COOLDOWN = 30;
 
 type Mode = "signIn" | "signUp";
 type Phase = "credentials" | "verifyEmail" | "resetRequest" | "resetVerify";
@@ -66,8 +70,16 @@ export default function AuthScreen({ mode }: { mode: Mode }) {
   const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  const [resendCooldown, setResendCooldown] = useState(0);
 
   const busy = submitting || googleLoading;
+
+  // Tick the resend cooldown down to zero, one second at a time.
+  useEffect(() => {
+    if (resendCooldown <= 0) return;
+    const id = setTimeout(() => setResendCooldown((s) => s - 1), 1000);
+    return () => clearTimeout(id);
+  }, [resendCooldown]);
 
   const panelPoints = [
     { Icon: Wallet, text: t("panelPoint1") },
@@ -154,6 +166,7 @@ export default function AuthScreen({ mode }: { mode: Mode }) {
       await signIn("password", { email: trimmedEmail, flow: "reset" });
       setSubmitting(false);
       goTo("resetVerify");
+      setResendCooldown(RESEND_COOLDOWN);
     } catch {
       setError(t("errorGeneric"));
       setSubmitting(false);
@@ -161,11 +174,12 @@ export default function AuthScreen({ mode }: { mode: Mode }) {
   }
 
   async function handleResend() {
-    if (busy) return;
+    if (busy || resendCooldown > 0) return;
     setError(null);
     try {
       await signIn("password", { email: email.trim(), flow: "reset" });
       setNotice(t("codeResent"));
+      setResendCooldown(RESEND_COOLDOWN);
     } catch {
       setError(t("errorGeneric"));
     }
@@ -302,7 +316,6 @@ export default function AuthScreen({ mode }: { mode: Mode }) {
                 title={t("verifyTitle")}
                 subtitle={t("verifySubtitle", { email: email.trim() })}
                 codeLabel={t("code")}
-                codePlaceholder={t("codePlaceholder")}
                 code={code}
                 setCode={setCode}
                 cta={t("verifyCta")}
@@ -348,6 +361,7 @@ export default function AuthScreen({ mode }: { mode: Mode }) {
                 busy={busy}
                 error={error}
                 notice={notice}
+                resendCooldown={resendCooldown}
                 onSubmit={handleResetVerify}
                 onResend={handleResend}
                 onBack={() => goTo("credentials")}
@@ -581,7 +595,6 @@ function CodeForm({
   title,
   subtitle,
   codeLabel,
-  codePlaceholder,
   code,
   setCode,
   cta,
@@ -594,6 +607,7 @@ function CodeForm({
   backLabel,
   onResend,
   resendLabel,
+  resendDisabled,
   clearError,
   children,
 }: {
@@ -601,7 +615,6 @@ function CodeForm({
   title: string;
   subtitle: string;
   codeLabel: string;
-  codePlaceholder: string;
   code: string;
   setCode: (v: string) => void;
   cta: string;
@@ -614,6 +627,7 @@ function CodeForm({
   backLabel: string;
   onResend?: () => void;
   resendLabel?: string;
+  resendDisabled?: boolean;
   clearError: () => void;
   children?: React.ReactNode;
 }) {
@@ -630,7 +644,6 @@ function CodeForm({
       <form onSubmit={onSubmit} noValidate className="mt-7 space-y-4">
         <CodeField
           label={codeLabel}
-          placeholder={codePlaceholder}
           value={code}
           onChange={(v) => {
             setCode(v);
@@ -665,8 +678,8 @@ function CodeForm({
             <button
               type="button"
               onClick={onResend}
-              disabled={busy}
-              className="font-medium text-emerald-ink underline-offset-4 hover:underline disabled:opacity-60"
+              disabled={busy || resendDisabled}
+              className="font-medium text-emerald-ink underline-offset-4 hover:underline disabled:cursor-not-allowed disabled:opacity-60 disabled:no-underline"
             >
               {resendLabel}
             </button>
@@ -752,6 +765,7 @@ function ResetVerifyForm({
   busy,
   error,
   notice,
+  resendCooldown,
   onSubmit,
   onResend,
   onBack,
@@ -769,6 +783,7 @@ function ResetVerifyForm({
   busy: boolean;
   error: string | null;
   notice: string | null;
+  resendCooldown: number;
   onSubmit: (e: FormEvent<HTMLFormElement>) => void;
   onResend: () => void;
   onBack: () => void;
@@ -780,7 +795,6 @@ function ResetVerifyForm({
       title={t("resetVerifyTitle")}
       subtitle={t("resetVerifySubtitle", { email: email.trim() })}
       codeLabel={t("code")}
-      codePlaceholder={t("codePlaceholder")}
       code={code}
       setCode={setCode}
       cta={t("resetVerifyCta")}
@@ -792,7 +806,12 @@ function ResetVerifyForm({
       onBack={onBack}
       backLabel={t("backToSignIn")}
       onResend={onResend}
-      resendLabel={t("resendCode")}
+      resendLabel={
+        resendCooldown > 0
+          ? t("resendIn", { seconds: resendCooldown })
+          : t("resendCode")
+      }
+      resendDisabled={resendCooldown > 0}
       clearError={clearError}
     >
       <div>
@@ -833,36 +852,110 @@ function ResetVerifyForm({
   );
 }
 
+// One box per digit, the classic OTP layout. Typing auto-advances, Backspace
+// steps back, arrows move between boxes, and pasting a full code fills them all.
+// The value is still a single string, so callers are unchanged.
 function CodeField({
   label,
-  placeholder,
   value,
   onChange,
   disabled,
 }: {
   label: string;
-  placeholder: string;
   value: string;
   onChange: (v: string) => void;
   disabled?: boolean;
 }) {
+  const inputsRef = useRef<Array<HTMLInputElement | null>>([]);
+  const digits = Array.from({ length: OTP_LENGTH }, (_, i) => value[i] ?? "");
+
+  function focusBox(index: number) {
+    const el = inputsRef.current[index];
+    if (el) {
+      el.focus();
+      el.select();
+    }
+  }
+
+  // Spread any incoming characters (single keystroke, autofill, or a paste that
+  // lands in one box) across the boxes starting at `index`.
+  function handleChange(index: number, raw: string) {
+    const clean = raw.replace(/\D/g, "");
+    const next = digits.slice();
+    if (clean === "") {
+      next[index] = "";
+      onChange(next.join(""));
+      return;
+    }
+    let cursor = index;
+    for (const ch of clean.split("")) {
+      if (cursor >= OTP_LENGTH) break;
+      next[cursor] = ch;
+      cursor++;
+    }
+    onChange(next.join("").slice(0, OTP_LENGTH));
+    focusBox(Math.min(cursor, OTP_LENGTH - 1));
+  }
+
+  function handleKeyDown(index: number, e: React.KeyboardEvent<HTMLInputElement>) {
+    if (e.key === "Backspace") {
+      e.preventDefault();
+      const next = digits.slice();
+      if (digits[index]) {
+        next[index] = "";
+        onChange(next.join(""));
+      } else if (index > 0) {
+        next[index - 1] = "";
+        onChange(next.join(""));
+        focusBox(index - 1);
+      }
+    } else if (e.key === "ArrowLeft" && index > 0) {
+      e.preventDefault();
+      focusBox(index - 1);
+    } else if (e.key === "ArrowRight" && index < OTP_LENGTH - 1) {
+      e.preventDefault();
+      focusBox(index + 1);
+    }
+  }
+
+  function handlePaste(e: React.ClipboardEvent<HTMLInputElement>) {
+    e.preventDefault();
+    const pasted = e.clipboardData
+      .getData("text")
+      .replace(/\D/g, "")
+      .slice(0, OTP_LENGTH);
+    if (!pasted) return;
+    onChange(pasted);
+    focusBox(Math.min(pasted.length, OTP_LENGTH - 1));
+  }
+
   return (
     <div>
-      <label htmlFor="otp" className="mb-1.5 block text-sm font-medium text-navy">
+      <span id="otp-label" className="mb-1.5 block text-sm font-medium text-navy">
         {label}
-      </label>
-      <input
-        id="otp"
-        type="text"
-        inputMode="numeric"
-        autoComplete="one-time-code"
-        maxLength={6}
-        placeholder={placeholder}
-        value={value}
-        onChange={(e) => onChange(e.target.value.replace(/[^0-9]/g, ""))}
-        disabled={disabled}
-        className="h-12 w-full rounded-xl border border-navy/15 bg-white px-3.5 text-center font-mono text-lg tracking-[0.5em] text-navy placeholder:tracking-[0.5em] placeholder:text-navy/30 transition-colors focus:border-emerald-ink focus:outline-none focus:ring-2 focus:ring-emerald-ink/30 disabled:opacity-60"
-      />
+      </span>
+      <div className="flex gap-2 sm:gap-2.5" role="group" aria-labelledby="otp-label">
+        {digits.map((digit, i) => (
+          <input
+            key={i}
+            ref={(el) => {
+              inputsRef.current[i] = el;
+            }}
+            type="text"
+            inputMode="numeric"
+            autoComplete={i === 0 ? "one-time-code" : "off"}
+            maxLength={1}
+            aria-label={`${label} ${i + 1}`}
+            value={digit}
+            disabled={disabled}
+            onChange={(e) => handleChange(i, e.target.value)}
+            onKeyDown={(e) => handleKeyDown(i, e)}
+            onPaste={handlePaste}
+            onFocus={(e) => e.target.select()}
+            className="h-12 w-full min-w-0 rounded-xl border border-navy/15 bg-white text-center font-mono text-lg text-navy transition-colors focus:border-emerald-ink focus:outline-none focus:ring-2 focus:ring-emerald-ink/30 disabled:opacity-60"
+          />
+        ))}
+      </div>
     </div>
   );
 }

@@ -1,5 +1,6 @@
 import { internalQuery, mutation } from "./_generated/server";
 import { v } from "convex/values";
+import { rateLimiter } from "./rateLimits";
 
 // Capture a waitlist signup. Duplicate emails are treated as success
 // (idempotent) so the UI never surfaces an error for re-submitting.
@@ -7,6 +8,10 @@ export const join = mutation({
   args: { email: v.string() },
   handler: async (ctx, args) => {
     const email = args.email.trim().toLowerCase();
+
+    // Throttle: per-address and a global ceiling against scripted floods.
+    await rateLimiter.limit(ctx, "waitlistJoin", { key: email, throws: true });
+    await rateLimiter.limit(ctx, "waitlistGlobal", { throws: true });
 
     const existing = await ctx.db
       .query("waitlist")

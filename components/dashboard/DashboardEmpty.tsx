@@ -3,9 +3,11 @@
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { Plus } from "lucide-react";
-import { POPULAR, logoUrl, type CatalogEntry } from "@/lib/catalog";
+import { logoUrl, catalogPrice, type CatalogEntry } from "@/lib/catalog";
 import type { SubscriptionDraft } from "@/lib/subscriptions";
 import { useDashboard } from "./DashboardProvider";
+import { useAccountCurrency } from "./useAccountCurrency";
+import { useCatalog } from "./useCatalog";
 import SubLogo from "./SubLogo";
 import AddSubscriptionButton from "./AddSubscriptionButton";
 
@@ -25,6 +27,8 @@ export default function DashboardEmpty() {
   const t = useTranslations("dashboard.onboard");
   const td = useTranslations("dashboard");
   const { addSubscription } = useDashboard();
+  const { popular } = useCatalog();
+  const accountCurrency = useAccountCurrency();
   const [adding, setAdding] = useState(false);
 
   function quickAdd(entry: CatalogEntry) {
@@ -32,13 +36,14 @@ export default function DashboardEmpty() {
     setAdding(true);
     const draft: SubscriptionDraft = {
       name: entry.name,
-      price: entry.price,
+      price: catalogPrice(entry, accountCurrency),
       cycle: entry.cycle,
       category: entry.category,
       nextRenewal: todayPlus(30),
       status: "active",
       color: entry.color,
       logo: logoUrl(entry.domain),
+      currency: accountCurrency,
     };
     // The view unmounts once the first sub lands; reset guards the error path.
     addSubscription(draft).finally(() => setAdding(false));
@@ -60,7 +65,7 @@ export default function DashboardEmpty() {
         {t("popular")}
       </p>
       <div className="mt-3 flex max-w-xl flex-wrap items-center justify-center gap-2">
-        {POPULAR.map((entry) => (
+        {popular.map((entry) => (
           <button
             key={entry.name}
             type="button"

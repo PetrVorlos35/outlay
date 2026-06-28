@@ -11,6 +11,13 @@ export const billingCycle = v.union(
 
 export const subStatus = v.union(v.literal("active"), v.literal("paused"));
 
+export const currencyCode = v.union(
+  v.literal("USD"),
+  v.literal("EUR"),
+  v.literal("CZK"),
+  v.literal("GBP"),
+);
+
 export const category = v.union(
   v.literal("streaming"),
   v.literal("music"),
@@ -31,6 +38,20 @@ export default defineSchema({
     email: v.string(),
     createdAt: v.number(),
   }).index("by_email", ["email"]),
+
+  // Reference catalog of known services, seeded from `lib/catalog.ts` and
+  // editable from the DB without shipping code. Prices are USD baselines the
+  // client converts to the user's currency on prefill.
+  catalogEntries: defineTable({
+    name: v.string(),
+    domain: v.string(),
+    color: v.string(),
+    price: v.number(), // USD baseline
+    priceCzk: v.optional(v.number()), // resolved local CZK price (real or converted)
+    cycle: billingCycle,
+    category: category,
+    popular: v.optional(v.boolean()),
+  }).index("by_name", ["name"]),
 
   subscriptions: defineTable({
     userId: v.id("users"),
@@ -57,6 +78,9 @@ export default defineSchema({
     reminderLeadDays: v.number(), // how many days before a renewal to email (1/3/7)
     priceHikeAlerts: v.boolean(),
     weeklySummary: v.boolean(),
+    // Account display currency. Independent of UI language; unset falls back to
+    // the locale default on the client.
+    currency: v.optional(currencyCode),
   }).index("by_user", ["userId"]),
 
   // One real spend snapshot per user per month — the monthly-normalized total of

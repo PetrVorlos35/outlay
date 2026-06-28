@@ -1,6 +1,21 @@
 import { Email } from "@convex-dev/auth/providers/Email";
 import { internal } from "./_generated/api";
 import type { ActionCtx } from "./_generated/server";
+import { rateLimiter } from "./rateLimits";
+
+// Throttle outgoing OTP emails per address (server-side backstop for the
+// client "Resend in 0:30" countdown). Throws if the address asked too soon,
+// which rejects the signIn call before any email is sent.
+async function guardOtpEmail(ctx: ActionCtx, email: string) {
+  const key = email.trim().toLowerCase();
+  const { ok, retryAfter } = await rateLimiter.limit(ctx, "sendOtp", { key });
+  if (!ok) {
+    const seconds = Math.ceil((retryAfter ?? 0) / 1000);
+    throw new Error(
+      `Too many code requests. Please wait ${seconds}s before trying again.`,
+    );
+  }
+}
 
 // 6-digit numeric OTP. Short tokens are paired with the email on verification
 // (Convex Auth checks the code matches the email used to request it).
@@ -44,6 +59,7 @@ export const EmailVerification = Email({
     { identifier: email, token }: { identifier: string; token: string },
     ctx?: ActionCtx,
   ) => {
+    await guardOtpEmail(ctx!, email);
     await ctx!.runAction(internal.email.send, {
       to: email,
       subject: "Verify your email — outlay",
@@ -66,6 +82,7 @@ export const PasswordReset = Email({
     { identifier: email, token }: { identifier: string; token: string },
     ctx?: ActionCtx,
   ) => {
+    await guardOtpEmail(ctx!, email);
     await ctx!.runAction(internal.email.send, {
       to: email,
       subject: "Reset your password — outlay",

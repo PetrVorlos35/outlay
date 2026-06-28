@@ -3,6 +3,12 @@ import { getAuthUserId } from "@convex-dev/auth/server";
 import { mutation, query, internalMutation } from "./_generated/server";
 import type { Id } from "./_generated/dataModel";
 import type { MutationCtx } from "./_generated/server";
+import { convert } from "../lib/currency";
+
+// Snapshots are stored in a canonical currency (USD) so a user's history stays
+// consistent regardless of the currencies their subscriptions are in; the
+// client converts to the account display currency when rendering.
+const CANONICAL = "USD";
 
 // Monthly-normalized price, mirroring lib/subscriptions CYCLE_TO_MONTHLY.
 function toMonthly(price: number, cycle: string): number {
@@ -58,7 +64,10 @@ async function userMonthly(
     .take(1000);
   return subs
     .filter((s) => s.status === "active")
-    .reduce((sum, s) => sum + toMonthly(s.price, s.cycle), 0);
+    .reduce(
+      (sum, s) => sum + convert(toMonthly(s.price, s.cycle), s.currency, CANONICAL),
+      0,
+    );
 }
 
 /**
@@ -106,7 +115,11 @@ export const snapshotAllUsers = internalMutation({
     const byUser = new Map<Id<"users">, number>();
     for (const s of subs) {
       if (s.status !== "active") continue;
-      byUser.set(s.userId, (byUser.get(s.userId) ?? 0) + toMonthly(s.price, s.cycle));
+      byUser.set(
+        s.userId,
+        (byUser.get(s.userId) ?? 0) +
+          convert(toMonthly(s.price, s.cycle), s.currency, CANONICAL),
+      );
     }
     const month = currentMonthIso();
     for (const [userId, monthly] of byUser) {

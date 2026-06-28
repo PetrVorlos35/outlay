@@ -2,11 +2,18 @@ import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { mutation, query, type QueryCtx } from "./_generated/server";
 import type { Id } from "./_generated/dataModel";
+import { currencyCode } from "./schema";
+import { requireUserWithinWriteLimit } from "./rateLimits";
+
+export type CurrencyCode = "USD" | "EUR" | "CZK" | "GBP";
 
 export type NotificationPrefs = {
   reminderLeadDays: number;
   priceHikeAlerts: boolean;
   weeklySummary: boolean;
+  // Unset when the user has never chosen one; the client then falls back to the
+  // locale default.
+  currency?: CurrencyCode;
 };
 
 export const DEFAULT_PREFS: NotificationPrefs = {
@@ -32,6 +39,7 @@ export async function getPrefsForUser(
         reminderLeadDays: row.reminderLeadDays,
         priceHikeAlerts: row.priceHikeAlerts,
         weeklySummary: row.weeklySummary,
+        currency: row.currency,
       }
     : DEFAULT_PREFS;
 }
@@ -50,10 +58,10 @@ export const set = mutation({
     reminderLeadDays: v.optional(leadDays),
     priceHikeAlerts: v.optional(v.boolean()),
     weeklySummary: v.optional(v.boolean()),
+    currency: v.optional(currencyCode),
   },
   handler: async (ctx, args) => {
-    const userId = await getAuthUserId(ctx);
-    if (userId === null) throw new Error("Not authenticated");
+    const userId = await requireUserWithinWriteLimit(ctx);
 
     const existing = await ctx.db
       .query("notificationPrefs")

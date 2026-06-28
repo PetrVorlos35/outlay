@@ -19,12 +19,14 @@ import {
   hasPriceHike,
   isDue,
   isUrgent,
-  totalMonthly,
+  totalMonthlyIn,
   type Subscription,
 } from "@/lib/subscriptions";
 import type { SpendPoint } from "@/lib/mock";
 import { formatCurrency } from "@/lib/format";
+import { convert } from "@/lib/currency";
 import { useDashboard } from "@/components/dashboard/DashboardProvider";
+import { useAccountCurrency } from "@/components/dashboard/useAccountCurrency";
 import { Panel, PageHeader, EmptyState } from "@/components/dashboard/primitives";
 import SubLogo from "@/components/dashboard/SubLogo";
 import RenewalBadge from "@/components/dashboard/RenewalBadge";
@@ -39,6 +41,7 @@ export default function OverviewPage() {
   const t = useTranslations("dashboard.overview");
   const td = useTranslations("dashboard");
   const locale = useLocale();
+  const accountCurrency = useAccountCurrency();
   const { subscriptions, loading, openAdd, openEdit } = useDashboard();
   const viewer = useQuery(api.users.viewer);
   const trendData = useQuery(api.spend.trend, { months: 7 });
@@ -46,7 +49,7 @@ export default function OverviewPage() {
 
   const stats = useMemo(() => {
     const active = subscriptions.filter((s) => s.status === "active");
-    const monthly = totalMonthly(subscriptions);
+    const monthly = totalMonthlyIn(subscriptions, accountCurrency);
     const upcoming = [...active]
       .filter((s) => daysUntil(s.nextRenewal) >= 0)
       .sort((a, b) => daysUntil(a.nextRenewal) - daysUntil(b.nextRenewal));
@@ -60,17 +63,21 @@ export default function OverviewPage() {
       hikes,
       next: upcoming[0],
     };
-  }, [subscriptions]);
+  }, [subscriptions, accountCurrency]);
 
-  // Real recorded history; before the first snapshot lands, show this month live
-  // so the chart isn't empty. Change pill compares the two most recent months.
+  // Real recorded history (stored in USD) converted to the account currency;
+  // before the first snapshot lands, show this month live so the chart isn't
+  // empty. Change pill compares the two most recent months.
   const history = useMemo<SpendPoint[]>(() => {
-    const real = trendData ?? [];
+    const real = (trendData ?? []).map((p) => ({
+      month: p.month,
+      amount: Math.round(convert(p.amount, "USD", accountCurrency) * 100) / 100,
+    }));
     if (real.length > 0) return real;
     return stats.monthly > 0
       ? [{ month: currentMonthIso(), amount: Math.round(stats.monthly * 100) / 100 }]
       : [];
-  }, [trendData, stats.monthly]);
+  }, [trendData, stats.monthly, accountCurrency]);
   const change =
     history.length > 1
       ? history[history.length - 1].amount - history[history.length - 2].amount
@@ -147,20 +154,27 @@ export default function OverviewPage() {
           </div>
           <div className="mt-2 flex flex-wrap items-end gap-3">
             <p className="font-mono text-4xl font-semibold leading-none tabular-nums tracking-tight text-navy sm:text-[2.75rem]">
-              {formatCurrency(headlineTotal, locale)}
+              {formatCurrency(headlineTotal, locale, accountCurrency)}
             </p>
-            <ChangePill change={headlineChange} locale={locale} t={t} />
+            <ChangePill
+              change={headlineChange}
+              locale={locale}
+              currency={accountCurrency}
+              t={t}
+            />
           </div>
           <p className="mt-2 text-sm text-navy/55">
             {view === "year"
-              ? t("perMonth", { amount: formatCurrency(stats.monthly, locale) })
+              ? t("perMonth", {
+                  amount: formatCurrency(stats.monthly, locale, accountCurrency),
+                })
               : t("perYear", {
-                  amount: formatCurrency(stats.monthly * 12, locale),
+                  amount: formatCurrency(stats.monthly * 12, locale, accountCurrency),
                 })}
           </p>
 
           <div className="mt-7">
-            <SpendChart data={chartData} height={88} showLabels />
+            <SpendChart data={chartData} height={88} showLabels currency={accountCurrency} />
             <p className="mt-3 inline-flex items-center gap-1.5 text-xs text-navy/40">
               {td("chart.estimate")}
               <InfoHint label={td("help.trendLabel")} text={td("help.trend")} />
@@ -180,7 +194,7 @@ export default function OverviewPage() {
             label={td("insights.statAnnual")}
             value={
               <span className="font-mono tabular-nums">
-                {formatCurrency(stats.monthly * 12, locale)}
+                {formatCurrency(stats.monthly * 12, locale, accountCurrency)}
               </span>
             }
           />
@@ -242,7 +256,7 @@ export default function OverviewPage() {
                     <RenewalBadge iso={sub.nextRenewal} withDate />
                   </div>
                   <span className="font-mono text-sm font-medium tabular-nums text-navy">
-                    {formatCurrency(sub.price, locale)}
+                    {formatCurrency(sub.price, locale, sub.currency)}
                   </span>
                 </button>
               </li>
@@ -268,7 +282,7 @@ export default function OverviewPage() {
                   detail={<RenewalBadge iso={sub.nextRenewal} withDate />}
                   trailing={
                     <span className="font-mono text-sm font-medium tabular-nums text-navy">
-                      {formatCurrency(sub.price, locale)}
+                      {formatCurrency(sub.price, locale, sub.currency)}
                     </span>
                   }
                 />
@@ -285,14 +299,15 @@ export default function OverviewPage() {
                         amount: formatCurrency(
                           sub.price - (sub.previousPrice ?? sub.price),
                           locale,
+                          sub.currency,
                         ),
-                        old: formatCurrency(sub.previousPrice ?? 0, locale),
+                        old: formatCurrency(sub.previousPrice ?? 0, locale, sub.currency),
                       })}
                     </span>
                   }
                   trailing={
                     <span className="font-mono text-sm font-medium tabular-nums text-navy">
-                      {formatCurrency(sub.price, locale)}
+                      {formatCurrency(sub.price, locale, sub.currency)}
                     </span>
                   }
                 />
@@ -321,10 +336,12 @@ function AddCta({ label, onClick }: { label: string; onClick: () => void }) {
 function ChangePill({
   change,
   locale,
+  currency,
   t,
 }: {
   change: number;
   locale: string;
+  currency: string;
   t: ReturnType<typeof useTranslations>;
 }) {
   if (Math.abs(change) < 0.005) {
@@ -335,7 +352,7 @@ function ChangePill({
     );
   }
   const up = change > 0;
-  const amount = formatCurrency(Math.abs(change), locale);
+  const amount = formatCurrency(Math.abs(change), locale, currency);
   return (
     <span
       className={`mb-1 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${

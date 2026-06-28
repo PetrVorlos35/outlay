@@ -14,11 +14,14 @@ export default function SpendChart({
   height = 64,
   showLabels = false,
   showAxis = false,
+  currency,
 }: {
   data: SpendPoint[];
   height?: number;
   showLabels?: boolean;
   showAxis?: boolean;
+  /** Account display currency for axis/tooltip; defaults to the locale currency. */
+  currency?: string;
 }) {
   const locale = useLocale();
   const max = Math.max(...data.map((d) => d.amount), 1);
@@ -31,9 +34,9 @@ export default function SpendChart({
           style={{ height }}
           aria-hidden
         >
-          <span>{formatCurrencyShort(max, locale)}</span>
-          <span>{formatCurrencyShort(max / 2, locale)}</span>
-          <span>{formatCurrencyShort(0, locale)}</span>
+          <span>{formatCurrencyShort(max, locale, currency)}</span>
+          <span>{formatCurrencyShort(max / 2, locale, currency)}</span>
+          <span>{formatCurrencyShort(0, locale, currency)}</span>
         </div>
       )}
       <div className="min-w-0 flex-1">
@@ -45,7 +48,7 @@ export default function SpendChart({
               <div
                 key={d.month}
                 className="group relative flex h-full flex-1 items-end"
-                title={`${formatMonth(d.month, locale)} · ${formatCurrency(d.amount, locale)}`}
+                title={`${formatMonth(d.month, locale)} · ${formatCurrency(d.amount, locale, currency)}`}
               >
                 <div
                   className={`animate-bar-grow w-full rounded-sm transition-colors ${

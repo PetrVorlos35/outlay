@@ -11,11 +11,13 @@
 import type * as auth from "../auth.js";
 import type * as authEmail from "../authEmail.js";
 import type * as broadcast from "../broadcast.js";
+import type * as catalog from "../catalog.js";
 import type * as crons from "../crons.js";
 import type * as email from "../email.js";
 import type * as http from "../http.js";
 import type * as notifications from "../notifications.js";
 import type * as preferences from "../preferences.js";
+import type * as rateLimits from "../rateLimits.js";
 import type * as spend from "../spend.js";
 import type * as subscriptions from "../subscriptions.js";
 import type * as users from "../users.js";
@@ -31,11 +33,13 @@ declare const fullApi: ApiFromModules<{
   auth: typeof auth;
   authEmail: typeof authEmail;
   broadcast: typeof broadcast;
+  catalog: typeof catalog;
   crons: typeof crons;
   email: typeof email;
   http: typeof http;
   notifications: typeof notifications;
   preferences: typeof preferences;
+  rateLimits: typeof rateLimits;
   spend: typeof spend;
   subscriptions: typeof subscriptions;
   users: typeof users;
@@ -68,4 +72,6 @@ export declare const internal: FilterApi<
   FunctionReference<any, "internal">
 >;
 
-export declare const components: {};
+export declare const components: {
+  rateLimiter: import("@convex-dev/rate-limiter/_generated/component.js").ComponentApi<"rateLimiter">;
+};
