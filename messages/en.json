@@ -1,4 +1,14 @@
 {
+  "notFound": {
+    "code": "404",
+    "title": "We couldn't find that page.",
+    "body": "The page you're looking for doesn't exist or may have moved. Let's get you back on track.",
+    "home": "Back to home",
+    "signIn": "Sign in",
+    "dashTitle": "Page not found",
+    "dashBody": "This page doesn't exist or has moved. Head back to your overview.",
+    "dashBack": "Back to overview"
+  },
   "nav": {
     "features": "Features",
     "how": "How it works",

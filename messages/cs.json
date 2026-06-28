@@ -1,4 +1,14 @@
 {
+  "notFound": {
+    "code": "404",
+    "title": "Tuhle stránku jsme nenašli.",
+    "body": "Stránka, kterou hledáš, neexistuje nebo se mohla přesunout. Vrátíme tě zpět na správnou cestu.",
+    "home": "Zpět na úvod",
+    "signIn": "Přihlásit se",
+    "dashTitle": "Stránka nenalezena",
+    "dashBody": "Tahle stránka neexistuje nebo se přesunula. Vrať se na přehled.",
+    "dashBack": "Zpět na přehled"
+  },
   "nav": {
     "features": "Funkce",
     "how": "Jak to funguje",
